@@ -1,0 +1,281 @@
+.wheel {
+  position: relative;
+  width: 100%;
+  padding-block: var(--space-16, 64px);
+  color: var(--fg, #f2f2f0);
+  font-family: var(--font-sans, "Hanken Grotesk", system-ui, sans-serif);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-inline: var(--space-6, 24px);
+  margin-bottom: var(--space-6, 24px);
+}
+
+.label {
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.count {
+  font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  opacity: 0.45;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  outline: none;
+  cursor: grab;
+}
+
+.stage:active {
+  cursor: grabbing;
+}
+
+.stage:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus, rgba(255, 255, 255, 0.5));
+}
+
+.isLandscape .stage {
+  height: min(70vh, 48vw);
+}
+
+.isPortrait .stage {
+  height: min(80vh, 150vw);
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: var(--space-6, 24px);
+  transform: translateX(0);
+  touch-action: pan-y;
+}
+
+.card {
+  position: relative;
+  flex: 0 0 auto;
+  height: 92%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #0b0b0b;
+  transform: translateZ(0) scale(1);
+  transform-origin: center center;
+}
+
+.isLandscape .card {
+  aspect-ratio: 16 / 9;
+}
+
+.isPortrait .card {
+  aspect-ratio: 9 / 16;
+}
+
+.cardHasChrome {
+  border-radius: 8px;
+  background: #141414;
+}
+
+.chrome {
+  flex: 0 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 14px;
+  background: #1c1c1c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.url {
+  margin-left: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.media {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background: #000;
+}
+
+.img,
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.meta {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 2;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  opacity: 0;
+  transition: opacity 220ms var(--motion-ease, cubic-bezier(0.16, 1, 0.3, 1));
+  pointer-events: none;
+}
+
+.card:global(.is-active) .meta {
+  opacity: 1;
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.sub {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+}
+
+.controls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 3;
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(6px);
+}
+
+.card:global(.is-active):global(.is-video) .controls {
+  display: flex;
+}
+
+.ctrl {
+  display: inline-grid;
+  place-items: center;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.85;
+  transition: opacity 120ms;
+}
+
+.ctrl:hover {
+  opacity: 1;
+}
+
+.ctrlTime {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: #fff;
+  opacity: 0.75;
+  min-width: 62px;
+  text-align: center;
+}
+
+.ic {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+:global(.voku-ic--off) {
+  display: none;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.32);
+  color: #fff;
+  cursor: pointer;
+  transition: background 160ms, opacity 160ms;
+}
+
+.nav:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.nav svg {
+  width: 22px;
+  height: 22px;
+}
+
+.navPrev {
+  left: 16px;
+}
+
+.navNext {
+  right: 16px;
+}
+
+@media (max-width: 768px) {
+  .isPortrait .stage {
+    height: 86svh;
+  }
+
+  .isPortrait .card {
+    height: 96%;
+  }
+
+  .track {
+    gap: var(--space-4, 16px);
+  }
+
+  .nav {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transform: none !important;
+  }
+
+  .meta {
+    transition: none;
+  }
+}

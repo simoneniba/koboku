@@ -1,0 +1,3 @@
+# Drop Blender-exported `.glb` / `.gltf` files here.
+# Convert to typed R3F components with:
+#   npx gltfjsx public/models/hero.glb -o src/components/three/models/Hero.tsx --types --transform
