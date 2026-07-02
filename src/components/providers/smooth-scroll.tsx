@@ -1,16 +1,15 @@
 "use client";
 
 import Lenis from "lenis";
-import { type ReactNode, useEffect, useRef, useState } from "react";
-import { gsap } from "@/lib/gsap";
-import { ScrollContext } from "@/lib/scroll-context";
+import { type ReactNode, useEffect, useRef } from "react";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { scrollStore } from "@/lib/scroll-store";
 
 interface SmoothScrollProps {
   children: ReactNode;
 }
 
 export function SmoothScroll({ children }: SmoothScrollProps) {
-  const [progress, setProgress] = useState(0);
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
@@ -30,8 +29,13 @@ export function SmoothScroll({ children }: SmoothScrollProps) {
     gsap.ticker.add(update);
     gsap.ticker.lagSmoothing(0);
 
-    lenis.on("scroll", ({ progress: p }: { progress: number }) => {
-      setProgress(p);
+    // Single source of truth for scroll values — mutable store, no React
+    // state, no per-frame re-renders. ScrollTrigger is kept in lockstep
+    // with Lenis (this sync line was missing and caused pin jitter).
+    lenis.on("scroll", ({ progress, scroll }: { progress: number; scroll: number }) => {
+      scrollStore.progress = progress;
+      scrollStore.scrollY = scroll;
+      ScrollTrigger.update();
     });
 
     return () => {
@@ -41,9 +45,5 @@ export function SmoothScroll({ children }: SmoothScrollProps) {
     };
   }, []);
 
-  return (
-    <ScrollContext.Provider value={{ progress }}>
-      {children}
-    </ScrollContext.Provider>
-  );
+  return <>{children}</>;
 }

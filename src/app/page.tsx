@@ -1,13 +1,14 @@
-import { SceneGate } from "@/components/three/scene-gate";
-import { Background } from "@/components/three/background";
 import { Nav } from "@/components/layout/nav";
+import { SceneDirector } from "@/components/providers/scene-director";
+import { Contact } from "@/components/sections/contact";
 import { Hero } from "@/components/sections/hero";
+import { Process } from "@/components/sections/process";
+import { Stance } from "@/components/sections/stance";
 import { Thesis } from "@/components/sections/thesis";
 import { Verticals } from "@/components/sections/verticals";
-import { Process } from "@/components/sections/process";
 import { Work } from "@/components/sections/work";
-import { Stance } from "@/components/sections/stance";
-import { Contact } from "@/components/sections/contact";
+import { Background } from "@/components/three/background";
+import { SceneGate } from "@/components/three/scene-gate";
 
 export default function HomePage() {
   return (
@@ -29,6 +30,10 @@ export default function HomePage() {
         <Stance />
         <Contact />
       </main>
+
+      {/* Section tracking for the camera/scene modes — after main so all
+          section ids exist when triggers are created */}
+      <SceneDirector />
     </>
   );
 }

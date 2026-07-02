@@ -1,7 +1,8 @@
 "use client";
 
-import { useScrollProgress } from "@/lib/scroll-context";
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { gsap } from "@/lib/gsap";
+import { scrollStore } from "@/lib/scroll-store";
 
 /**
  * Fixed full-viewport water video background.
@@ -12,18 +13,22 @@ import { useRef, useEffect, useState } from "react";
  * - Pointer events disabled — sits behind all content and the 3D canvas.
  */
 export function Background() {
-  const progress = useScrollProgress();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
 
+  // Parallax driven imperatively from the scroll store — no re-renders.
   useEffect(() => {
-    if (!wrapperRef.current) return;
-    // Negative translateY: as the user scrolls down, the video drifts up,
-    // creating a parallax depth effect without exposing the viewport edges.
-    const translateY = -progress * 80;
-    wrapperRef.current.style.transform = `translate3d(0, ${translateY}px, 0)`;
-  }, [progress]);
+    let last = -1;
+    const sync = () => {
+      const p = scrollStore.progress;
+      if (p === last || !wrapperRef.current) return;
+      last = p;
+      wrapperRef.current.style.transform = `translate3d(0, ${-p * 80}px, 0)`;
+    };
+    gsap.ticker.add(sync);
+    return () => gsap.ticker.remove(sync);
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -42,10 +47,7 @@ export function Background() {
   }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-0 overflow-hidden bg-marine"
-      aria-hidden="true"
-    >
+    <div className="fixed inset-0 z-0 overflow-hidden bg-marine" aria-hidden="true">
       <div
         ref={wrapperRef}
         className="absolute inset-x-0 -top-[5vh] h-[120vh] will-change-transform"

@@ -19,19 +19,19 @@ const bodoniModa = Bodoni_Moda({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://koboku.studio"),
+  metadataBase: new URL("https://www.koboku.it"),
   title: {
     default: "Koboku Studio — Crafted in motion",
     template: "%s · Koboku Studio",
   },
   description:
-    "Koboku Studio is an independent creative studio serving yachting, hospitality, real estate, and UHNWI brands — brand systems, digital flagships, and 3D-first storytelling.",
+    "Japanese discipline, Italian craft. Websites, software, cinematic AI, agents and automations — built for yachting, hospitality, and luxury.",
   openGraph: {
     type: "website",
     siteName: "Koboku Studio",
     title: "Koboku Studio — Crafted in motion",
     description:
-      "Independent creative studio serving yachting, hospitality, real estate, and UHNWI brands.",
+      "Websites, software, cinematic AI, agents and automations — built for yachting, hospitality, and luxury.",
   },
 };
 

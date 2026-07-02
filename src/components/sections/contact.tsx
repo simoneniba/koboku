@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
-import { useInView } from "motion/react";
+import { motion, useInView } from "motion/react";
+import Link from "next/link";
 import { useRef } from "react";
 
 export function Contact() {
@@ -30,8 +30,7 @@ export function Contact() {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         >
-          Have a brief{" "}
-          <span className="italic">worth carving?</span>
+          Have a brief <span className="italic">worth carving?</span>
         </motion.h2>
 
         <motion.div
@@ -40,15 +39,34 @@ export function Contact() {
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 1.4, delay: 0.5 }}
         >
-          <a
-            href="mailto:info@koboku.it"
-            className="text-display text-[clamp(1.2rem,2.5vw,2rem)] text-bone/70 hover:text-bone transition-colors pointer-events-auto"
+          <Link
+            href="/contact"
+            className="group inline-flex items-baseline gap-4 text-display text-[clamp(1.6rem,3.4vw,3rem)] text-bone border-b border-bone/30 hover:border-amber hover:text-amber transition-colors duration-500 pb-2 pointer-events-auto"
           >
-            info@koboku.it
-          </a>
+            <span>Commission a study</span>
+            <span className="text-eyebrow text-bone/50 group-hover:text-amber transition-colors duration-500">
+              →
+            </span>
+          </Link>
+          <div className="mt-8 flex flex-wrap items-baseline gap-x-8 gap-y-2">
+            <a
+              href="mailto:info@koboku.it"
+              className="text-sm text-bone/50 hover:text-bone transition-colors pointer-events-auto"
+            >
+              info@koboku.it
+            </a>
+            <a
+              href="https://www.instagram.com/koboku_aistudio/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-bone/50 hover:text-bone transition-colors pointer-events-auto"
+            >
+              Instagram — @koboku_aistudio →
+            </a>
+          </div>
           <p className="mt-4 text-sm text-bone/40 max-w-[36ch] leading-relaxed">
-            We take a limited number of mandates each year. Introductions are
-            welcome; cold briefs are read with equal attention.
+            We take a limited number of mandates each year. Introductions are welcome; cold briefs
+            are read with equal attention.
           </p>
         </motion.div>
       </div>

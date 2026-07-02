@@ -33,11 +33,7 @@ export function Stance() {
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
 
   return (
-    <section
-      ref={ref}
-      id="stance"
-      className="relative min-h-svh px-6 md:px-10 py-32 md:py-48"
-    >
+    <section ref={ref} id="stance" className="relative min-h-svh px-6 md:px-10 py-32 md:py-48">
       <div className="max-w-5xl mx-auto">
         <motion.span
           className="text-eyebrow text-bone/40 block mb-16"

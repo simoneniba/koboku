@@ -64,6 +64,7 @@ export function Hero() {
   return (
     <section
       ref={sectionRef}
+      id="hero"
       className="relative h-svh w-full px-6 md:px-10 pt-12 pb-12 pointer-events-none overflow-hidden z-[1]"
     >
       <div ref={kobokuRef} className="absolute top-12 left-2 md:left-4 -z-10" style={{ opacity: 0 }}>

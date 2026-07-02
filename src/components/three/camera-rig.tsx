@@ -1,85 +1,50 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useScrollProgress } from "@/lib/scroll-context";
+import { modeForSection, SECTION_IDS, sceneState, sectionTrack } from "@/lib/scene-state";
 
 // Shared between CameraRig and Statue — written by CameraRig, read by Statue.
 export const statueRotationState = { y: 0 };
 
 /**
- * Six-keyframe cinematic camera choreography.
+ * Section-driven cinematic camera. One keyframe per page section, in the
+ * same order as SECTION_IDS. The active section and its local progress come
+ * from SceneDirector (real ScrollTrigger measurements), so keyframes stay
+ * glued to their sections no matter how long any pin is.
  *
- * Keyframes (one per page section):
- *   0 — Hero:      wide, full statue, current composition
- *   1 — Thesis:    aggressive zoom on left wing
- *   2 — Verticals: aggressive zoom on face / head
- *   3 — Process:   aggressive zoom on crossed hands / chest
- *   4 — Work:      aggressive zoom on right wing (mirror of keyframe 1)
- *   5 — Contact:   aggressive zoom on feet
- *
- * Snap-and-hold timing: each keyframe holds for ~80% of its scroll segment,
- * with the remaining 20% used for the transition to the next keyframe.
- *
- * IMPORTANT: position and lookAt values are initial guesses. Tune iteratively
- * by adjusting the numeric values below. Each keyframe is independent.
+ * Within a section: the first TRANSITION_RATIO blends from the previous
+ * keyframe to this one, the rest holds.
  */
 
 type Keyframe = {
   position: [number, number, number];
   lookAt: [number, number, number];
-  statueRotationY: number; // additional Y rotation offset for the statue at this keyframe
+  statueRotationY: number;
 };
 
+// Index-aligned with SECTION_IDS: hero, thesis, verticals, process, work,
+// stance, contact.
 const KEYFRAMES: Keyframe[] = [
-  // 0 — Hero: locked, base rotation
+  // hero — wide, full statue
   { position: [0, 0.2, 4.2], lookAt: [0, 0, 0], statueRotationY: 0 },
-  // 1 — Thesis: stessa inquadratura del kf2, statua a destra, traslata oltre.
+  // thesis — statue right, wing framing
   { position: [-1.2, 1.0, 2.2], lookAt: [-0.8, 0.8, 0], statueRotationY: -Math.PI * 0.14 },
-  // 2 — Verticals: stessa inquadratura, statua a destra
+  // verticals — hold the same framing while the cube rolls
   { position: [-1.2, 1.0, 2.2], lookAt: [-0.8, 0.8, 0], statueRotationY: -Math.PI * 0.14 },
-  // 3 — Process: hands frontal, statue rotates further to face camera
-  { position: [0, -0.1, 2.0], lookAt: [0, -0.1, 0], statueRotationY: -Math.PI * 0.25 },
-  // 4 — Work: face frontal, statue rotates slightly more for face presentation
-  { position: [0, 0.7, 1.9], lookAt: [0, 0.7, 0], statueRotationY: -Math.PI * 0.32 },
-  // 5 — Contact: zoom out, statue returns toward base rotation
+  // process — pedestal: pulled back, statue centred (scale drop happens in Statue)
+  { position: [0, 0.45, 13], lookAt: [0, 0.45, 0], statueRotationY: 0 },
+  // work — the orbit constellation: wide enough to see the full ring
+  { position: [0, 0.6, 7.2], lookAt: [0, 0.35, 0], statueRotationY: 0 },
+  // stance — slight retreat, keeps the face readable behind the tenets
+  { position: [0.4, 0.6, 3.0], lookAt: [0, 0.4, 0], statueRotationY: -Math.PI * 0.2 },
+  // contact — zoom out, statue returns toward base rotation
   { position: [0.1, 0.8, 7.0], lookAt: [0, 0, 0], statueRotationY: 0 },
 ];
 
-const SECTION_COUNT = 6;
-const HOLD_RATIO = 0.4; // transizione più ampia e anticipata
+const TRANSITION_RATIO = 0.35;
 
-// Smoothstep easing for the transition portion of each segment
 function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);
-}
-
-function getKeyframeBlend(progress: number): {
-  from: number;
-  to: number;
-  t: number;
-} {
-  // Total scroll is divided into SECTION_COUNT segments.
-  const segmentSize = 1 / SECTION_COUNT;
-  const segmentIndex = Math.min(
-    SECTION_COUNT - 1,
-    Math.floor(progress / segmentSize),
-  );
-  const localProgress = (progress - segmentIndex * segmentSize) / segmentSize;
-
-  // Within each segment, hold for HOLD_RATIO, then transition.
-  if (localProgress < HOLD_RATIO) {
-    // Holding at current keyframe.
-    return { from: segmentIndex, to: segmentIndex, t: 0 };
-  }
-
-  // Transitioning to next keyframe.
-  const transitionProgress = (localProgress - HOLD_RATIO) / (1 - HOLD_RATIO);
-  const nextIndex = Math.min(segmentIndex + 1, KEYFRAMES.length - 1);
-  return {
-    from: segmentIndex,
-    to: nextIndex,
-    t: smoothstep(transitionProgress),
-  };
 }
 
 function lerp3(
@@ -87,21 +52,22 @@ function lerp3(
   b: [number, number, number],
   t: number,
 ): [number, number, number] {
-  return [
-    a[0] + (b[0] - a[0]) * t,
-    a[1] + (b[1] - a[1]) * t,
-    a[2] + (b[2] - a[2]) * t,
-  ];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
 export function CameraRig() {
   const { camera } = useThree();
-  const progress = useScrollProgress();
 
   useFrame(() => {
-    const { from, to, t } = getKeyframeBlend(progress);
-    const kfFrom = KEYFRAMES[from];
-    const kfTo = KEYFRAMES[to];
+    const index = Math.min(sectionTrack.index, KEYFRAMES.length - 1);
+    const local = sectionTrack.local;
+
+    // Keep the scene mode in sync with the active section.
+    sceneState.mode = modeForSection(index);
+
+    const kfTo = KEYFRAMES[index];
+    const kfFrom = KEYFRAMES[Math.max(0, index - 1)];
+    const t = local >= TRANSITION_RATIO ? 1 : smoothstep(local / TRANSITION_RATIO);
 
     const targetPos = lerp3(kfFrom.position, kfTo.position, t);
     const targetLook = lerp3(kfFrom.lookAt, kfTo.lookAt, t);
@@ -119,3 +85,6 @@ export function CameraRig() {
 
   return null;
 }
+
+// Keep the id list exported for anyone tuning keyframes against sections.
+export { SECTION_IDS };
