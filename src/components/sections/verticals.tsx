@@ -42,30 +42,32 @@ const HOLD = 0.25;
 
 function VerticalFace({ v }: { v: Vertical }) {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden p-5 md:p-8">
-      <header className="pb-4 shrink-0">
-        <h2 className="text-display text-[clamp(1.15rem,2.4vw,1.55rem)] md:text-[clamp(1.35rem,2.8vw,1.85rem)] text-bone leading-none">
-          {v.name}
-        </h2>
-        <span className="text-eyebrow text-bone/30 block mt-2 text-xs md:text-sm">{v.note}</span>
+    <div className="flex h-full flex-col items-center justify-center text-center gap-y-5 px-6 py-10 overflow-hidden">
+      <header className="shrink-0">
+        <h2 className="text-display text-3xl md:text-4xl text-bone leading-none">{v.name}</h2>
+        <span className="text-eyebrow block mt-1 text-bone/30">{v.note}</span>
       </header>
 
-      <dl className="flex-1 flex flex-col mt-4 min-h-0 text-sm md:text-base leading-snug">
-        <div className="space-y-2 md:space-y-3 min-h-0">
-          <div>
-            <dt className="text-eyebrow text-bone/35 mb-1 text-xs md:text-sm">Website</dt>
-            <dd className="text-bone/65">{v.website}</dd>
-          </div>
-          <div>
-            <dt className="text-eyebrow text-bone/35 mb-1 text-xs md:text-sm">Cinematic AI</dt>
-            <dd className="text-bone/65">{v.cinematicAI}</dd>
-          </div>
-          <div>
-            <dt className="text-eyebrow text-bone/35 mb-1 text-xs md:text-sm">Automation</dt>
-            <dd className="text-bone/65">{v.automation}</dd>
-          </div>
+      <div className="flex min-h-0 flex-col gap-y-5">
+        <div className="flex flex-col gap-y-1">
+          <span className="text-eyebrow text-bone/50">Website</span>
+          <p className="text-sm md:text-base leading-snug max-w-[36ch] mx-auto text-bone/65">
+            {v.website}
+          </p>
         </div>
-      </dl>
+        <div className="flex flex-col gap-y-1">
+          <span className="text-eyebrow text-bone/50">Cinematic AI</span>
+          <p className="text-sm md:text-base leading-snug max-w-[36ch] mx-auto text-bone/65">
+            {v.cinematicAI}
+          </p>
+        </div>
+        <div className="flex flex-col gap-y-1">
+          <span className="text-eyebrow text-bone/50">Automation</span>
+          <p className="text-sm md:text-base leading-snug max-w-[36ch] mx-auto text-bone/65">
+            {v.automation}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

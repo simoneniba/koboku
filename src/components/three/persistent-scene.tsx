@@ -1,6 +1,5 @@
 "use client";
 
-import { Preload } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useRef } from "react";
 import * as THREE from "three";
@@ -90,7 +89,7 @@ export function PersistentScene() {
       onPointerLeave={endDrag}
     >
       <Canvas
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
         gl={{
           antialias: true,
           alpha: true,
@@ -107,7 +106,6 @@ export function PersistentScene() {
           <Statue />
           <OrbitRing />
           <ReadySignal />
-          <Preload all />
         </Suspense>
       </Canvas>
     </div>

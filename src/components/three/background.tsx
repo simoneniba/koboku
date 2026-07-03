@@ -17,6 +17,19 @@ export function Background() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
 
+  // One less decoder when the tab is hidden — the water video pauses
+  // in the background and resumes on return.
+  useEffect(() => {
+    const onVisibility = () => {
+      const v = videoRef.current;
+      if (!v) return;
+      if (document.visibilityState === "hidden") v.pause();
+      else v.play().catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
   // Parallax driven imperatively from the scroll store — no re-renders.
   useEffect(() => {
     let last = -1;

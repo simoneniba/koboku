@@ -104,7 +104,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-1.mp4",
-    poster: "/images/reels/reel-image-1.png",
+    poster: "/images/posters/reel-1.jpg",
     ratio: "9:16",
     title: "Reel 1",
   },
@@ -112,7 +112,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-2.mp4",
-    poster: "/images/reels/reel-image-2.png",
+    poster: "/images/posters/reel-2.jpg",
     ratio: "9:16",
     title: "Reel 2",
   },
@@ -120,7 +120,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-3.mp4",
-    poster: "/images/reels/reel-image-3.png",
+    poster: "/images/posters/reel-3.jpg",
     ratio: "9:16",
     title: "Reel 3",
   },
@@ -128,7 +128,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-4.mp4",
-    poster: "/images/reels/reel-image-4.png",
+    poster: "/images/posters/reel-4.jpg",
     ratio: "9:16",
     title: "Reel 4",
   },
@@ -136,7 +136,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-5.mp4",
-    poster: "/images/reels/reel-image-5.png",
+    poster: "/images/posters/reel-5.jpg",
     ratio: "9:16",
     title: "Reel 5",
   },
@@ -144,7 +144,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-6.mp4",
-    poster: "/images/reels/reel-image-6.png",
+    poster: "/images/posters/reel-6.jpg",
     ratio: "9:16",
     title: "Reel 6",
   },
@@ -152,7 +152,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-7.mp4",
-    poster: "/images/reels/reel-image-7.png",
+    poster: "/images/posters/reel-7.jpg",
     ratio: "9:16",
     title: "Reel 7",
   },
@@ -160,7 +160,7 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-8.mp4",
-    poster: "/images/reels/reel-image-8.png",
+    poster: "/images/posters/reel-8.jpg",
     ratio: "9:16",
     title: "Reel 8",
   },
@@ -168,21 +168,21 @@ export const orbitReels: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/reels/reel-9.mp4",
-    poster: "/images/reels/reel-image-8.png",
+    poster: "/images/posters/reel-9.jpg",
     ratio: "9:16",
     title: "Reel 9",
   },
   {
     type: "video",
     src: "/videos/reels/reel-10.mp4",
-    poster: "/images/reels/reel-image-8.png",
+    poster: "/images/posters/reel-10.jpg",
     ratio: "9:16",
     title: "Reel 10",
   },
   {
     type: "video",
     src: "/videos/reels/reel-11.mp4",
-    poster: "/images/reels/reel-image-8.png",
+    poster: "/images/posters/reel-11.jpg",
     ratio: "9:16",
     title: "Reel 11",
   },
@@ -192,7 +192,7 @@ export const orbitFilm: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/film/film-1.mp4",
-    poster: "/images/film/film-image-1.jpeg",
+    poster: "/images/posters/film-1.jpg",
     ratio: "16:9",
     title: "Film 1",
   },
@@ -200,7 +200,7 @@ export const orbitFilm: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/film/film-2.mp4",
-    poster: "/images/film/film-image-2.jpeg",
+    poster: "/images/posters/film-2.jpg",
     ratio: "16:9",
     title: "Film 2",
   },
@@ -208,7 +208,7 @@ export const orbitFilm: OrbitItem[] = [
   {
     type: "video",
     src: "/videos/film/film-3.mp4",
-    poster: "/images/film/film-image-3.jpeg",
+    poster: "/images/posters/film-3.jpg",
     ratio: "16:9",
     title: "Film 3",
   },
@@ -233,32 +233,8 @@ export const orbitFilm: OrbitItem[] = [
 const CASA_PASSERINI_URL = "https://casa-passerini-site.vercel.app/it/";
 
 export const orbitSites: OrbitItem[] = [
-  {
-    type: "image",
-    src: imgL("kob-site-cp-1"),
-    ratio: "16:9",
-    title: "Casa Passerini",
-    href: CASA_PASSERINI_URL,
-  },
-  {
-    type: "image",
-    src: imgL("kob-site-cp-2"),
-    ratio: "16:9",
-    title: "Casa Passerini",
-    href: CASA_PASSERINI_URL,
-  },
-  {
-    type: "image",
-    src: imgL("kob-site-cp-3"),
-    ratio: "16:9",
-    title: "Casa Passerini",
-    href: CASA_PASSERINI_URL,
-  },
-  {
-    type: "image",
-    src: imgL("kob-site-cp-4"),
-    ratio: "16:9",
-    title: "Casa Passerini",
-    href: CASA_PASSERINI_URL,
-  },
+  { type: "image", src: "/images/sites/casa-passerini-1.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
+  { type: "image", src: "/images/sites/casa-passerini-2.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
+  { type: "image", src: "/images/sites/casa-passerini-3.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
+  { type: "image", src: "/images/sites/casa-passerini-4.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
 ];
