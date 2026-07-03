@@ -1,7 +1,7 @@
 "use client";
 
 import { useGSAP } from "@gsap/react";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { sceneState } from "@/lib/scene-state";
 
@@ -10,10 +10,11 @@ import { sceneState } from "@/lib/scene-state";
  * Linear phase scrub: Reels completes exactly when the pin releases.
  */
 
-const SETTLE = 0.2;
-const PHASE_SCRUB = 1.0;
-const PHASE_TARGET = 2;
-const PIN_SCROLL = "+=72%";
+const SETTLE = 0.15;
+const PHASE_SCRUB = 0.85;
+const PHASE_TARGET = 1.85; // Reels fully framed — pin ends here, no tail
+const PIN_SCROLL = "+=58%";
+const HIDE_LABEL_AT = 1.45;
 
 const DRAG_GAIN = 0.006;
 const DRAG_VEL = 0.0035;
@@ -66,6 +67,8 @@ export function Work() {
   const pinRef = useRef<HTMLDivElement>(null);
   const drag = useRef<DragState>({ ...DRAG_IDLE });
   const isCoarse = useRef(false);
+  const hideLabelRef = useRef(false);
+  const [hideLabel, setHideLabel] = useState(false);
 
   useLayoutEffect(() => {
     isCoarse.current = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
@@ -84,15 +87,28 @@ export function Work() {
           scrub: true,
           anticipatePin: 0,
           invalidateOnRefresh: true,
-          onLeave: resetWorkInteraction,
-          onLeaveBack: resetWorkInteraction,
+          onLeave: () => {
+            resetWorkInteraction();
+            hideLabelRef.current = false;
+            setHideLabel(false);
+          },
+          onLeaveBack: () => {
+            resetWorkInteraction();
+            hideLabelRef.current = false;
+            setHideLabel(false);
+          },
         },
       });
 
       const proxy = { phase: 0 };
       const apply = () => {
-        sceneState.orbitPhase =
-          proxy.phase >= 1.95 ? PHASE_TARGET : proxy.phase;
+        sceneState.orbitPhase = proxy.phase;
+
+        const hide = proxy.phase >= HIDE_LABEL_AT;
+        if (hide !== hideLabelRef.current) {
+          hideLabelRef.current = hide;
+          setHideLabel(hide);
+        }
       };
 
       tl.to(proxy, { phase: 0, duration: SETTLE, onUpdate: apply }, 0);
@@ -187,7 +203,11 @@ export function Work() {
   return (
     <section ref={sectionRef} id="work" className="relative">
       <div ref={pinRef} className="relative h-svh">
-        <span className="text-eyebrow text-bone/40 absolute top-24 left-6 md:left-12 pointer-events-none">
+        <span
+          className={`text-eyebrow text-bone/40 absolute top-24 left-6 md:left-12 pointer-events-none transition-opacity duration-500 ${
+            hideLabel ? "opacity-0" : "opacity-100"
+          }`}
+        >
           — Selected work / 04
         </span>
 
