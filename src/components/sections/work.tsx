@@ -1,20 +1,15 @@
 "use client";
 
 import { useGSAP } from "@gsap/react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { sceneState } from "@/lib/scene-state";
 
-/**
- * Selected Work — three orbit rings scrubbed by a short pin timeline.
- * Linear phase scrub: Reels completes exactly when the pin releases.
- */
-
-const SETTLE = 0.15;
-const PHASE_SCRUB = 0.85;
-const PHASE_TARGET = 1.85; // Reels fully framed — pin ends here, no tail
-const PIN_SCROLL = "+=58%";
-const HIDE_LABEL_AT = 1.45;
+const SETTLE = 0.2;
+const PHASE_SCRUB = 1.0;
+const PHASE_TARGET = 2;
+const PIN_SCROLL = "+=70%";
+const REELS_LABEL_HIDE = 1.5;
 
 const DRAG_GAIN = 0.006;
 const DRAG_VEL = 0.0035;
@@ -65,10 +60,9 @@ function engageReelsVideos() {
 export function Work() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
   const drag = useRef<DragState>({ ...DRAG_IDLE });
   const isCoarse = useRef(false);
-  const hideLabelRef = useRef(false);
-  const [hideLabel, setHideLabel] = useState(false);
 
   useLayoutEffect(() => {
     isCoarse.current = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
@@ -87,16 +81,8 @@ export function Work() {
           scrub: true,
           anticipatePin: 0,
           invalidateOnRefresh: true,
-          onLeave: () => {
-            resetWorkInteraction();
-            hideLabelRef.current = false;
-            setHideLabel(false);
-          },
-          onLeaveBack: () => {
-            resetWorkInteraction();
-            hideLabelRef.current = false;
-            setHideLabel(false);
-          },
+          onLeave: resetWorkInteraction,
+          onLeaveBack: resetWorkInteraction,
         },
       });
 
@@ -104,10 +90,9 @@ export function Work() {
       const apply = () => {
         sceneState.orbitPhase = proxy.phase;
 
-        const hide = proxy.phase >= HIDE_LABEL_AT;
-        if (hide !== hideLabelRef.current) {
-          hideLabelRef.current = hide;
-          setHideLabel(hide);
+        const label = labelRef.current;
+        if (label) {
+          label.style.display = proxy.phase >= REELS_LABEL_HIDE ? "none" : "";
         }
       };
 
@@ -204,9 +189,8 @@ export function Work() {
     <section ref={sectionRef} id="work" className="relative">
       <div ref={pinRef} className="relative h-svh">
         <span
-          className={`text-eyebrow text-bone/40 absolute top-24 left-6 md:left-12 pointer-events-none transition-opacity duration-500 ${
-            hideLabel ? "opacity-0" : "opacity-100"
-          }`}
+          ref={labelRef}
+          className="text-eyebrow text-bone/40 absolute top-24 left-6 md:left-12 pointer-events-none"
         >
           — Selected work / 04
         </span>
