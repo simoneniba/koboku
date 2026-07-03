@@ -98,7 +98,7 @@ export function Contact() {
       id="contact"
       className="relative flex min-h-svh flex-col px-6 pb-10 pt-28 md:px-10 md:pt-32"
     >
-      <div className="flex-1 min-h-[8vh] md:min-h-[12vh]" aria-hidden />
+      <div className="flex-1 min-h-[4vh] md:min-h-[6vh]" aria-hidden />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl">
         <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">

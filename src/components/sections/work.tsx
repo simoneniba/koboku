@@ -14,9 +14,9 @@ import { sceneState } from "@/lib/scene-state";
  * native scroll. touch-action: pan-y keeps mobile scroll reliable.
  */
 
-const SETTLE = 1.2;
-const PHASES = 3;
-const PIN_SCROLL = "+=320%";
+const SETTLE = 0.8;
+const PHASES = 2; // 0→1→2 maps to Sites, Film, Reels (orbit-ring clamps at 2)
+const PIN_SCROLL = "+=220%";
 
 type DragState = {
   active: boolean;
