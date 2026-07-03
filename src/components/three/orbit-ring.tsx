@@ -346,7 +346,7 @@ export function OrbitRing() {
         if (g) g.userData.hoverTarget = 1;
       }
     });
-    if (sceneState.pointer.active && activeRing) {
+    if (vis > 0.25 && sceneState.pointer.active && activeRing) {
       state.raycaster.setFromCamera(
         pointerVec.set(sceneState.pointer.x, sceneState.pointer.y),
         state.camera,

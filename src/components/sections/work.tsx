@@ -1,7 +1,7 @@
 "use client";
 
 import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { sceneState } from "@/lib/scene-state";
 
@@ -9,25 +9,52 @@ import { sceneState } from "@/lib/scene-state";
  * Selected Work — the orbit constellation. Three rings of real footage
  * (Sites → Film → Reels) orbit the statue in the persistent 3D scene.
  *
- * The pin timeline holds phase 0 for its first stretch — a settle window
- * that covers the camera's travel into the section — so the Sites ring is
- * the first thing seen once the statue is in its final framing, instead
- * of burning away mid-transition.
- *
- * ALL interaction lives on the DOM overlay below (not on the WebGL
- * canvas): drag / touch-drag rotates the ring, trackpad lateral swipe and
- * Shift+wheel rotate it, and pointer position is written to the shared
- * store for raycast hover inside OrbitRing. touch-action: pan-y keeps
- * vertical scroll native on mobile while horizontal gestures rotate.
+ * ALL interaction lives on the DOM overlay (not the WebGL canvas).
+ * Horizontal drag rotates the ring; vertical gestures pass through to
+ * native scroll. touch-action: pan-y keeps mobile scroll reliable.
  */
 
-const SETTLE = 1.2; // timeline units held at phase 0 before the orbits move
+const SETTLE = 1.2;
 const PHASES = 3;
+const PIN_SCROLL = "+=320%";
+
+type DragState = {
+  active: boolean;
+  lastX: number;
+  startX: number;
+  startY: number;
+  decided: boolean;
+  rotating: boolean;
+  pointerId: number;
+  target: HTMLElement | null;
+};
+
+const DRAG_IDLE: DragState = {
+  active: false,
+  lastX: 0,
+  startX: 0,
+  startY: 0,
+  decided: false,
+  rotating: false,
+  pointerId: -1,
+  target: null,
+};
+
+function resetWorkInteraction() {
+  sceneState.dragging = false;
+  sceneState.pointer.active = false;
+  sceneState.orbitDragVelocity = 0;
+}
 
 export function Work() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
-  const drag = useRef({ active: false, lastX: 0 });
+  const drag = useRef<DragState>({ ...DRAG_IDLE });
+  const isCoarse = useRef(false);
+
+  useLayoutEffect(() => {
+    isCoarse.current = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  }, []);
 
   useGSAP(
     () => {
@@ -37,11 +64,13 @@ export function Work() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=450%",
+          end: PIN_SCROLL,
           pin: pinRef.current,
-          scrub: 1,
-          anticipatePin: 1,
+          scrub: isCoarse.current ? 0.6 : 1,
+          anticipatePin: isCoarse.current ? 0 : 1,
           invalidateOnRefresh: true,
+          onLeave: resetWorkInteraction,
+          onLeaveBack: resetWorkInteraction,
         },
       });
 
@@ -49,15 +78,13 @@ export function Work() {
       const apply = () => {
         sceneState.orbitPhase = proxy.phase;
       };
-      // Settle hold: statue arrives, Sites ring fades in, nothing advances.
+
       tl.to(proxy, { phase: 0, duration: SETTLE, onUpdate: apply }, 0);
-      // Then the three orbits, evenly.
       tl.to(proxy, { phase: PHASES, ease: "none", duration: PHASES, onUpdate: apply }, SETTLE);
     },
     { scope: sectionRef },
   );
 
-  // ── DOM interaction layer (no canvas events involved) ──────────────
   const setPointer = (e: React.PointerEvent) => {
     sceneState.pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
     sceneState.pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -65,25 +92,57 @@ export function Work() {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
-    drag.current.active = true;
-    drag.current.lastX = e.clientX;
-    sceneState.dragging = true;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    drag.current = {
+      active: true,
+      lastX: e.clientX,
+      startX: e.clientX,
+      startY: e.clientY,
+      decided: false,
+      rotating: false,
+      pointerId: e.pointerId,
+      target: e.currentTarget as HTMLElement,
+    };
     setPointer(e);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     setPointer(e);
-    if (!drag.current.active) return;
-    const dx = e.clientX - drag.current.lastX;
-    drag.current.lastX = e.clientX;
-    sceneState.orbitDragVelocity = dx * 0.0022;
+    const d = drag.current;
+    if (!d.active) return;
+
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+
+    if (!d.decided) {
+      const travel = Math.abs(dx) + Math.abs(dy);
+      if (travel < 10) return;
+
+      d.decided = true;
+      d.rotating = Math.abs(dx) > Math.abs(dy) * 1.15;
+
+      if (d.rotating) {
+        sceneState.dragging = true;
+        d.target?.setPointerCapture(e.pointerId);
+      } else {
+        d.active = false;
+        return;
+      }
+    }
+
+    if (!d.rotating) return;
+
+    const stepX = e.clientX - d.lastX;
+    d.lastX = e.clientX;
+    sceneState.orbitDragVelocity = stepX * 0.0022;
   };
 
   const endDrag = (e: React.PointerEvent) => {
-    drag.current.active = false;
+    const d = drag.current;
+    if (d.rotating && d.target) {
+      d.target.releasePointerCapture?.(e.pointerId);
+    }
+    drag.current = { ...DRAG_IDLE };
     sceneState.dragging = false;
-    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
   };
 
   const onPointerLeave = (e: React.PointerEvent) => {
@@ -92,10 +151,11 @@ export function Work() {
   };
 
   const onWheel = (e: React.WheelEvent) => {
-    // Lateral trackpad swipe OR Shift+wheel (mouse) rotates the ring;
-    // plain vertical wheel scrolls the page as normal.
+    if (isCoarse.current) return;
+
     const lateral = Math.abs(e.deltaX) > Math.abs(e.deltaY);
     if (!lateral && !e.shiftKey) return;
+
     e.preventDefault();
     const delta = lateral ? e.deltaX : e.deltaY;
     sceneState.orbitDragVelocity += delta * 0.00035;
@@ -108,8 +168,6 @@ export function Work() {
           — Selected work / 04
         </span>
 
-        {/* Interaction surface: sits in normal page stacking (above the
-            canvas), so drag/hover work without any pointer-event gating. */}
         <div
           className="absolute inset-0 cursor-grab active:cursor-grabbing"
           style={{ touchAction: "pan-y" }}

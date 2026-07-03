@@ -83,7 +83,8 @@ export function Statue() {
     const pedestalTarget = sceneState.mode === "pedestal" ? 1 : 0;
     sceneState.pedestalBlend += (pedestalTarget - sceneState.pedestalBlend) * 0.07;
     const orbitTarget = sceneState.mode === "orbit" ? 1 : 0;
-    sceneState.orbitBlend += (orbitTarget - sceneState.orbitBlend) * 0.12;
+    const orbitLerp = sceneState.mode === "orbit" ? 0.12 : 0.22;
+    sceneState.orbitBlend += (orbitTarget - sceneState.orbitBlend) * orbitLerp;
     const pedestal = sceneState.pedestalBlend;
 
     // --- Pedestal spin (self-rotation + drag inertia) --------------------

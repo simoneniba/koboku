@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { gsap } from "@/lib/gsap";
 import { markSceneReady } from "@/lib/ready-state";
@@ -31,6 +31,12 @@ function ReadySignal() {
 export function PersistentScene() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, lastX: 0 });
+  const [dpr, setDpr] = useState<[number, number]>([1, 1.5]);
+
+  useEffect(() => {
+    const coarse = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    setDpr(coarse ? [1, 1] : [1, 1.5]);
+  }, []);
 
   // Pointer events are enabled only while a section wants interaction
   // (pedestal statue spin, orbit ring drag). Everywhere else the canvas
@@ -87,7 +93,7 @@ export function PersistentScene() {
       onPointerLeave={endDrag}
     >
       <Canvas
-        dpr={[1, 1.5]}
+        dpr={dpr}
         gl={{
           antialias: true,
           alpha: true,

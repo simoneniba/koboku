@@ -9,10 +9,29 @@ interface SmoothScrollProps {
   children: ReactNode;
 }
 
+function syncScrollStore() {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  scrollStore.scrollY = window.scrollY;
+  scrollStore.progress = max > 0 ? window.scrollY / max : 0;
+  ScrollTrigger.update();
+}
+
 export function SmoothScroll({ children }: SmoothScrollProps) {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    const isTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
+    if (isTouch) {
+      syncScrollStore();
+      window.addEventListener("scroll", syncScrollStore, { passive: true });
+      window.addEventListener("resize", syncScrollStore, { passive: true });
+      return () => {
+        window.removeEventListener("scroll", syncScrollStore);
+        window.removeEventListener("resize", syncScrollStore);
+      };
+    }
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - 2 ** (-10 * t)),
@@ -29,9 +48,6 @@ export function SmoothScroll({ children }: SmoothScrollProps) {
     gsap.ticker.add(update);
     gsap.ticker.lagSmoothing(0);
 
-    // Single source of truth for scroll values — mutable store, no React
-    // state, no per-frame re-renders. ScrollTrigger is kept in lockstep
-    // with Lenis (this sync line was missing and caused pin jitter).
     lenis.on("scroll", ({ progress, scroll }: { progress: number; scroll: number }) => {
       scrollStore.progress = progress;
       scrollStore.scrollY = scroll;
