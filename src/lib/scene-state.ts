@@ -45,6 +45,8 @@ export const sceneState = {
   /** Orbit ring rotation: accumulated pointer drag (radians) + inertia. */
   orbitDrag: 0,
   orbitDragVelocity: 0,
+  /** Reels ring: posters only until the user first drags horizontally. */
+  orbitReelsEngaged: false,
 
   /** True while the user is actively dragging on the canvas. */
   dragging: false,

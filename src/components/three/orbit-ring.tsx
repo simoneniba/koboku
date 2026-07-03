@@ -233,11 +233,13 @@ function Ring({
   items,
   baseOffset,
   active,
+  videosEnabled,
   ringRotationRef,
 }: {
   items: OrbitItem[];
   baseOffset: number;
   active: boolean;
+  videosEnabled: boolean;
   ringRotationRef: React.RefObject<number>;
 }) {
   const count = items.length;
@@ -247,9 +249,9 @@ function Ring({
         const angle = baseOffset + (i / count) * Math.PI * 2;
         const x = Math.sin(angle) * RADIUS;
         const z = Math.cos(angle) * RADIUS;
-        // Videos only get a real <video> element on the active ring AND
-        // when they have a poster to fall back to; otherwise static.
-        const lazy = item.type === "video" && active && item.poster;
+        // Videos only mount when the ring is active, has a poster, and
+        // (for Reels) the user has engaged via horizontal drag.
+        const lazy = item.type === "video" && active && item.poster && videosEnabled;
         return (
           <Billboard key={`${item.title}-${angle.toFixed(3)}`} position={[x, 0, z]}>
             <Suspense fallback={null}>
@@ -280,6 +282,7 @@ export function OrbitRing() {
   const ringRotationRefs = useRef<React.RefObject<number>[]>(RING_DEFS.map(() => ({ current: 0 })));
   const reducedMotion = useRef(false);
   const [activeRingIndex, setActiveRingIndex] = useState(-1); // -1: none until Work
+  const [reelsVideosEnabled, setReelsVideosEnabled] = useState(false);
 
   useLayoutEffect(() => {
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -300,7 +303,12 @@ export function OrbitRing() {
     // section is actually reached.
     if (vis < 0.05) {
       if (activeRingIndex !== -1) setActiveRingIndex(-1);
+      if (reelsVideosEnabled) setReelsVideosEnabled(false);
       return;
+    }
+
+    if (sceneState.orbitReelsEngaged && !reelsVideosEnabled) {
+      setReelsVideosEnabled(true);
     }
 
     if (!reducedMotion.current && !sceneState.dragging) {
@@ -374,6 +382,7 @@ export function OrbitRing() {
             items={ring.items}
             baseOffset={ring.baseOffset}
             active={i === activeRingIndex}
+            videosEnabled={i !== 2 || reelsVideosEnabled}
             ringRotationRef={ringRotationRefs.current[i]}
           />
         </group>

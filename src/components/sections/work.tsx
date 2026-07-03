@@ -6,31 +6,20 @@ import { gsap } from "@/lib/gsap";
 import { sceneState } from "@/lib/scene-state";
 
 /**
- * Selected Work — the orbit constellation. Three rings of real footage
- * (Sites → Film → Reels) orbit the statue in the persistent 3D scene.
- *
- * ALL interaction lives on the DOM overlay (not the WebGL canvas).
- * Horizontal drag rotates the ring; vertical gestures pass through to
- * native scroll. touch-action: pan-y keeps mobile scroll reliable.
+ * Selected Work — three orbit rings scrubbed by a short pin timeline.
+ * Vertical scroll drives phase (Sites → Film → Reels); horizontal drag
+ * rotates the active ring with identical sensitivity on every phase.
+ * Reels videos stay poster-only until the first horizontal engagement.
  */
 
-const SETTLE = 0.8;
-const PHASES = 2; // 0→1→2 maps to Sites, Film, Reels (orbit-ring clamps at 2)
-const REELS_HOLD = 0.5; // hold on Reels so horizontal drag has time to register
-const PIN_SCROLL = "+=250%";
+const SETTLE = 0.5;
+const PHASES = 2;
+const PIN_SCROLL = "+=170%";
 
-function isReelsPhase() {
-  return sceneState.orbitPhase >= 1.45;
-}
-
-function horizontalIntent(dx: number, dy: number) {
-  const adx = Math.abs(dx);
-  const ady = Math.abs(dy);
-  if (isReelsPhase()) {
-    return adx > 6 && adx >= ady * 0.55;
-  }
-  return adx > ady * 1.05;
-}
+const DRAG_GAIN = 0.006;
+const DRAG_VEL = 0.0035;
+const GESTURE_MIN = 8;
+const GESTURE_RATIO = 0.85;
 
 type DragState = {
   active: boolean;
@@ -54,10 +43,23 @@ const DRAG_IDLE: DragState = {
   target: null,
 };
 
+function horizontalIntent(dx: number, dy: number) {
+  const adx = Math.abs(dx);
+  const ady = Math.abs(dy);
+  return adx > GESTURE_MIN && adx >= ady * GESTURE_RATIO;
+}
+
 function resetWorkInteraction() {
   sceneState.dragging = false;
   sceneState.pointer.active = false;
   sceneState.orbitDragVelocity = 0;
+  sceneState.orbitReelsEngaged = false;
+}
+
+function engageReelsVideos() {
+  if (sceneState.orbitPhase >= 1.35) {
+    sceneState.orbitReelsEngaged = true;
+  }
 }
 
 export function Work() {
@@ -80,8 +82,8 @@ export function Work() {
           start: "top top",
           end: PIN_SCROLL,
           pin: pinRef.current,
-          scrub: isCoarse.current ? 0.6 : 1,
-          anticipatePin: isCoarse.current ? 0 : 1,
+          scrub: true,
+          anticipatePin: 0,
           invalidateOnRefresh: true,
           onLeave: resetWorkInteraction,
           onLeaveBack: resetWorkInteraction,
@@ -95,11 +97,6 @@ export function Work() {
 
       tl.to(proxy, { phase: 0, duration: SETTLE, onUpdate: apply }, 0);
       tl.to(proxy, { phase: PHASES, ease: "none", duration: PHASES, onUpdate: apply }, SETTLE);
-      tl.to(
-        proxy,
-        { phase: PHASES, duration: REELS_HOLD, onUpdate: apply },
-        SETTLE + PHASES,
-      );
     },
     { scope: sectionRef },
   );
@@ -133,14 +130,14 @@ export function Work() {
     const dy = e.clientY - d.startY;
 
     if (!d.decided) {
-      const travel = Math.abs(dx) + Math.abs(dy);
-      if (travel < (isReelsPhase() ? 6 : 10)) return;
+      if (Math.abs(dx) + Math.abs(dy) < GESTURE_MIN) return;
 
       d.decided = true;
       d.rotating = horizontalIntent(dx, dy);
 
       if (d.rotating) {
         sceneState.dragging = true;
+        engageReelsVideos();
         d.target?.setPointerCapture(e.pointerId);
       } else {
         d.active = false;
@@ -152,8 +149,8 @@ export function Work() {
 
     const stepX = e.clientX - d.lastX;
     d.lastX = e.clientX;
-    sceneState.orbitDrag += stepX * 0.0045;
-    sceneState.orbitDragVelocity = stepX * 0.0028;
+    sceneState.orbitDrag += stepX * DRAG_GAIN;
+    sceneState.orbitDragVelocity = stepX * DRAG_VEL;
   };
 
   const endDrag = (e: React.PointerEvent) => {
@@ -177,9 +174,10 @@ export function Work() {
     if (!lateral && !e.shiftKey) return;
 
     e.preventDefault();
+    engageReelsVideos();
     const delta = lateral ? e.deltaX : e.deltaY;
-    sceneState.orbitDrag += delta * 0.0012;
-    sceneState.orbitDragVelocity += delta * 0.00045;
+    sceneState.orbitDrag += delta * 0.0016;
+    sceneState.orbitDragVelocity += delta * 0.00055;
   };
 
   return (

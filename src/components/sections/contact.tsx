@@ -96,10 +96,8 @@ export function Contact() {
     <section
       ref={ref}
       id="contact"
-      className="relative flex min-h-svh flex-col px-6 pb-10 pt-28 md:px-10 md:pt-32"
+      className="relative flex min-h-[88svh] flex-col justify-end px-6 pb-10 pt-16 md:px-10 md:pt-20"
     >
-      <div className="flex-1 min-h-[4vh] md:min-h-[6vh]" aria-hidden />
-
       <div className="relative z-10 mx-auto w-full max-w-6xl">
         <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">
           <motion.div
