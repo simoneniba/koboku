@@ -15,21 +15,17 @@ export function Process() {
 
   useGSAP(
     () => {
-      // Re-runs when `mounted` flips true and the portaled sheet exists.
       if (!mounted || !sectionRef.current || !pinRef.current || !whiteRef.current)
         return;
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        // No-op: sheet stays parked below viewport, video remains visible,
-        // section is a plain viewport-height beat.
         return;
       }
 
       const sheet = whiteRef.current;
 
-      // ONE pinned, scrubbed timeline: rise (first ~half) + hold (rest).
-      // immediateRender keeps the sheet at y:100% any time scroll is above
-      // the trigger start — no guard trigger needed.
+      // Single scrubbed timeline — rise, hold, exit. No onLeave/onEnterBack
+      // tweens that fight scroll position when reversing direction.
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -39,14 +35,6 @@ export function Process() {
           scrub: 1,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          // Exit: sheet leaves upward when scrolling past the section,
-          // returns to full white when scrolling back up into it.
-          onLeave: () =>
-            gsap.to(sheet, { y: "-100%", duration: 0.5, ease: "power2.in" }),
-          onEnterBack: () => {
-            gsap.killTweensOf(sheet);
-            gsap.to(sheet, { y: "0%", duration: 0.4, ease: "power2.out" });
-          },
         },
       });
 
@@ -56,10 +44,10 @@ export function Process() {
         { y: "0%", ease: "none", duration: 1, immediateRender: true },
         0,
       );
-      // Hold at full white for the remainder of the pin.
-      tl.to(sheet, { y: "0%", duration: 1 }, 1);
+      tl.to(sheet, { y: "0%", duration: 0.45 }, 1);
+      // Exit upward before Work — sheet off-screen when pin releases.
+      tl.to(sheet, { y: "-100%", ease: "none", duration: 0.55 }, 1.45);
 
-      // Refresh AFTER upstream pin spacing (Verticals +=320%) has settled.
       const raf = requestAnimationFrame(() => ScrollTrigger.refresh());
       return () => cancelAnimationFrame(raf);
     },
@@ -69,7 +57,7 @@ export function Process() {
   const whiteLayer = (
     <div
       ref={whiteRef}
-      className="fixed inset-0 z-[1] bg-white pointer-events-none will-change-transform"
+      className="fixed -inset-[2px] z-[1] isolate bg-white pointer-events-none backface-hidden"
       style={{ transform: "translate3d(0, 100%, 0)" }}
       aria-hidden="true"
     />

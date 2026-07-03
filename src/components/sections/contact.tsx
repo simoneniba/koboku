@@ -96,7 +96,7 @@ export function Contact() {
     <section
       ref={ref}
       id="contact"
-      className="relative flex min-h-[88svh] flex-col justify-end px-6 pb-10 pt-16 md:px-10 md:pt-20"
+      className="relative px-6 pb-12 pt-[10vh] md:px-10 md:pb-14 md:pt-[12vh]"
     >
       <div className="relative z-10 mx-auto w-full max-w-6xl">
         <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">

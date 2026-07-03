@@ -7,14 +7,12 @@ import { sceneState } from "@/lib/scene-state";
 
 /**
  * Selected Work — three orbit rings scrubbed by a short pin timeline.
- * Vertical scroll drives phase (Sites → Film → Reels); horizontal drag
- * rotates the active ring with identical sensitivity on every phase.
- * Reels videos stay poster-only until the first horizontal engagement.
+ * Phase uses power2.out so Reels arrives early; pin ends soon after.
  */
 
-const SETTLE = 0.5;
+const SETTLE = 0.25;
 const PHASES = 2;
-const PIN_SCROLL = "+=170%";
+const PIN_SCROLL = "+=115%";
 
 const DRAG_GAIN = 0.006;
 const DRAG_VEL = 0.0035;
@@ -96,7 +94,12 @@ export function Work() {
       };
 
       tl.to(proxy, { phase: 0, duration: SETTLE, onUpdate: apply }, 0);
-      tl.to(proxy, { phase: PHASES, ease: "none", duration: PHASES, onUpdate: apply }, SETTLE);
+      // power2.out — Reels reached around 65% of the phase scroll, not at the very end.
+      tl.to(
+        proxy,
+        { phase: PHASES, ease: "power2.out", duration: PHASES, onUpdate: apply },
+        SETTLE,
+      );
     },
     { scope: sectionRef },
   );
