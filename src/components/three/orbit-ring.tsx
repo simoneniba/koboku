@@ -281,7 +281,7 @@ export function OrbitRing() {
   const ringRefs = useRef<(Group | null)[]>([]);
   const ringRotationRefs = useRef<React.RefObject<number>[]>(RING_DEFS.map(() => ({ current: 0 })));
   const reducedMotion = useRef(false);
-  const [activeRingIndex, setActiveRingIndex] = useState(-1); // -1: none until Work
+  const [activeRingIndex, setActiveRingIndex] = useState(-1);
   const [reelsVideosEnabled, setReelsVideosEnabled] = useState(false);
 
   useLayoutEffect(() => {
@@ -354,7 +354,10 @@ export function OrbitRing() {
         if (g) g.userData.hoverTarget = 1;
       }
     });
-    if (vis > 0.25 && sceneState.pointer.active && activeRing) {
+    const reelsRaycastReady =
+      activeRingIndex !== 2 || sceneState.orbitReelsEngaged;
+
+    if (vis > 0.25 && sceneState.pointer.active && activeRing && reelsRaycastReady) {
       state.raycaster.setFromCamera(
         pointerVec.set(sceneState.pointer.x, sceneState.pointer.y),
         state.camera,

@@ -10,6 +10,7 @@ import { CameraRig } from "./camera-rig";
 import { LightingRig } from "./lighting-rig";
 import { OrbitRing } from "./orbit-ring";
 import { Statue } from "./statue";
+import { FrameInvalidator } from "./frame-invalidator";
 
 /** Montato dentro il Canvas dopo che la statua è caricata: aspetta qualche
  *  frame perché il frame rate si stabilizzi, poi segnala "scena pronta". */
@@ -94,6 +95,7 @@ export function PersistentScene() {
     >
       <Canvas
         dpr={dpr}
+        frameloop="demand"
         gl={{
           antialias: true,
           alpha: true,
@@ -106,6 +108,7 @@ export function PersistentScene() {
       >
         <CameraRig />
         <LightingRig />
+        <FrameInvalidator />
         <Suspense fallback={null}>
           <Statue />
           <OrbitRing />

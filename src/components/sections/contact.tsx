@@ -1,8 +1,10 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
 import { motion, useInView } from "motion/react";
 import Link from "next/link";
 import { useRef } from "react";
+import { gsap } from "@/lib/gsap";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -90,15 +92,40 @@ function SocialLink({
 
 export function Contact() {
   const ref = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+
+  useGSAP(
+    () => {
+      if (!contentRef.current || !ref.current) return;
+
+      gsap.fromTo(
+        contentRef.current,
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1,
+          y: 0,
+          ease: "none",
+          scrollTrigger: {
+            trigger: ref.current,
+            start: "top 85%",
+            end: "top 60%",
+            scrub: 0.3,
+            invalidateOnRefresh: true,
+          },
+        },
+      );
+    },
+    { scope: ref },
+  );
 
   return (
     <section
       ref={ref}
       id="contact"
-      className="relative px-6 pb-12 pt-[10vh] md:px-10 md:pb-14 md:pt-[12vh]"
+      className="relative -mt-[min(28vh,220px)] px-6 pb-12 pt-[6vh] md:px-10 md:pb-14"
     >
-      <div className="relative z-10 mx-auto w-full max-w-6xl">
+      <div ref={contentRef} className="relative z-10 mx-auto w-full max-w-6xl">
         <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">
           <motion.div
             className="lg:col-span-7"

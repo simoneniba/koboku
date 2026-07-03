@@ -11,4 +11,6 @@ export const scrollStore = {
   progress: 0,
   /** Absolute scroll position in px */
   scrollY: 0,
+  /** True while Process white sheet fully covers the viewport */
+  whiteSheetCovering: false,
 };

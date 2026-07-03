@@ -4,6 +4,17 @@ import { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { scrollStore } from "@/lib/scroll-store";
+
+function sheetYPercent(sheet: HTMLElement): number {
+  const y = gsap.getProperty(sheet, "y");
+  if (typeof y === "string") return parseFloat(y);
+  return typeof y === "number" ? y : 100;
+}
+
+function syncSheetCovering(sheet: HTMLElement) {
+  scrollStore.whiteSheetCovering = Math.abs(sheetYPercent(sheet)) < 2;
+}
 
 export function Process() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -24,8 +35,6 @@ export function Process() {
 
       const sheet = whiteRef.current;
 
-      // Single scrubbed timeline — rise, hold, exit. No onLeave/onEnterBack
-      // tweens that fight scroll position when reversing direction.
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -35,6 +44,7 @@ export function Process() {
           scrub: 1,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onUpdate: () => syncSheetCovering(sheet),
         },
       });
 
@@ -45,8 +55,29 @@ export function Process() {
         0,
       );
       tl.to(sheet, { y: "0%", duration: 0.45 }, 1);
-      // Exit upward before Work — sheet off-screen when pin releases.
       tl.to(sheet, { y: "-100%", ease: "none", duration: 0.55 }, 1.45);
+
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        onEnter: () => {
+          sheet.style.willChange = "transform";
+        },
+        onEnterBack: () => {
+          sheet.style.willChange = "transform";
+        },
+        onLeave: () => {
+          gsap.set(sheet, { y: "-100%" });
+          scrollStore.whiteSheetCovering = false;
+          sheet.style.willChange = "";
+        },
+        onLeaveBack: () => {
+          gsap.set(sheet, { y: "100%" });
+          scrollStore.whiteSheetCovering = false;
+          sheet.style.willChange = "";
+        },
+      });
 
       const raf = requestAnimationFrame(() => ScrollTrigger.refresh());
       return () => cancelAnimationFrame(raf);

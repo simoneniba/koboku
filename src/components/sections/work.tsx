@@ -1,18 +1,20 @@
 "use client";
 
 import { useGSAP } from "@gsap/react";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { sceneState } from "@/lib/scene-state";
 
 /**
- * Selected Work — three orbit rings scrubbed by a short pin timeline.
- * Phase uses power2.out so Reels arrives early; pin ends soon after.
+ * Selected Work — short pin timeline; Reels phase splits scroll (top) from
+ * orbit drag (bottom). Phase uses power3.out so Reels completes early.
  */
 
-const SETTLE = 0.25;
-const PHASES = 2;
-const PIN_SCROLL = "+=115%";
+const SETTLE = 0.2;
+const PHASE_DURATION = 1.4;
+const PHASE_TARGET = 2;
+const PIN_SCROLL = "+=100%";
+const REELS_SPLIT_AT = 1.5;
 
 const DRAG_GAIN = 0.006;
 const DRAG_VEL = 0.0035;
@@ -60,11 +62,49 @@ function engageReelsVideos() {
   }
 }
 
+type OverlayProps = {
+  className?: string;
+  style?: React.CSSProperties;
+  onPointerDown: (e: React.PointerEvent) => void;
+  onPointerMove: (e: React.PointerEvent) => void;
+  onPointerUp: (e: React.PointerEvent) => void;
+  onPointerCancel: (e: React.PointerEvent) => void;
+  onPointerLeave: (e: React.PointerEvent) => void;
+  onWheel: (e: React.WheelEvent) => void;
+};
+
+function OrbitOverlay({
+  className,
+  style,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+  onPointerLeave,
+  onWheel,
+}: OverlayProps) {
+  return (
+    <div
+      className={className}
+      style={style}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      onPointerLeave={onPointerLeave}
+      onWheel={onWheel}
+    />
+  );
+}
+
 export function Work() {
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const drag = useRef<DragState>({ ...DRAG_IDLE });
   const isCoarse = useRef(false);
+  const splitRef = useRef(false);
+  const [reelsSplit, setReelsSplit] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(false);
 
   useLayoutEffect(() => {
     isCoarse.current = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
@@ -73,6 +113,21 @@ export function Work() {
   useGSAP(
     () => {
       if (!sectionRef.current || !pinRef.current) return;
+
+      const proxy = { phase: 0 };
+
+      const apply = () => {
+        const clamped = proxy.phase >= 1.95 ? PHASE_TARGET : proxy.phase;
+        sceneState.orbitPhase = clamped;
+
+        const split = clamped >= REELS_SPLIT_AT;
+        if (split !== splitRef.current) {
+          splitRef.current = split;
+          setReelsSplit(split);
+        }
+
+        setShowScrollHint(split && clamped < 1.8);
+      };
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -83,21 +138,30 @@ export function Work() {
           scrub: true,
           anticipatePin: 0,
           invalidateOnRefresh: true,
-          onLeave: resetWorkInteraction,
-          onLeaveBack: resetWorkInteraction,
+          onLeave: () => {
+            resetWorkInteraction();
+            splitRef.current = false;
+            setReelsSplit(false);
+            setShowScrollHint(false);
+          },
+          onLeaveBack: () => {
+            resetWorkInteraction();
+            splitRef.current = false;
+            setReelsSplit(false);
+            setShowScrollHint(false);
+          },
         },
       });
 
-      const proxy = { phase: 0 };
-      const apply = () => {
-        sceneState.orbitPhase = proxy.phase;
-      };
-
       tl.to(proxy, { phase: 0, duration: SETTLE, onUpdate: apply }, 0);
-      // power2.out — Reels reached around 65% of the phase scroll, not at the very end.
       tl.to(
         proxy,
-        { phase: PHASES, ease: "power2.out", duration: PHASES, onUpdate: apply },
+        {
+          phase: PHASE_TARGET,
+          ease: "power3.out",
+          duration: PHASE_DURATION,
+          onUpdate: apply,
+        },
         SETTLE,
       );
     },
@@ -183,6 +247,15 @@ export function Work() {
     sceneState.orbitDragVelocity += delta * 0.00055;
   };
 
+  const overlayProps: OverlayProps = {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp: endDrag,
+    onPointerCancel: endDrag,
+    onPointerLeave,
+    onWheel,
+  };
+
   return (
     <section ref={sectionRef} id="work" className="relative">
       <div ref={pinRef} className="relative h-svh">
@@ -190,16 +263,32 @@ export function Work() {
           — Selected work / 04
         </span>
 
-        <div
-          className="absolute inset-0 cursor-grab active:cursor-grabbing"
-          style={{ touchAction: "pan-y" }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          onPointerLeave={onPointerLeave}
-          onWheel={onWheel}
-        />
+        {showScrollHint && (
+          <span className="text-eyebrow text-bone/30 absolute bottom-[48%] left-1/2 -translate-x-1/2 pointer-events-none">
+            Scroll
+          </span>
+        )}
+
+        {reelsSplit ? (
+          <>
+            <div
+              className="absolute inset-x-0 top-0 h-[55%]"
+              style={{ touchAction: "pan-y" }}
+              aria-hidden
+            />
+            <OrbitOverlay
+              {...overlayProps}
+              className="absolute inset-x-0 bottom-0 h-[45%] cursor-grab active:cursor-grabbing"
+              style={{ touchAction: "none" }}
+            />
+          </>
+        ) : (
+          <OrbitOverlay
+            {...overlayProps}
+            className="absolute inset-0 cursor-grab active:cursor-grabbing"
+            style={{ touchAction: "pan-y" }}
+          />
+        )}
       </div>
     </section>
   );
