@@ -16,7 +16,21 @@ import { sceneState } from "@/lib/scene-state";
 
 const SETTLE = 0.8;
 const PHASES = 2; // 0→1→2 maps to Sites, Film, Reels (orbit-ring clamps at 2)
-const PIN_SCROLL = "+=220%";
+const REELS_HOLD = 0.5; // hold on Reels so horizontal drag has time to register
+const PIN_SCROLL = "+=250%";
+
+function isReelsPhase() {
+  return sceneState.orbitPhase >= 1.45;
+}
+
+function horizontalIntent(dx: number, dy: number) {
+  const adx = Math.abs(dx);
+  const ady = Math.abs(dy);
+  if (isReelsPhase()) {
+    return adx > 6 && adx >= ady * 0.55;
+  }
+  return adx > ady * 1.05;
+}
 
 type DragState = {
   active: boolean;
@@ -81,6 +95,11 @@ export function Work() {
 
       tl.to(proxy, { phase: 0, duration: SETTLE, onUpdate: apply }, 0);
       tl.to(proxy, { phase: PHASES, ease: "none", duration: PHASES, onUpdate: apply }, SETTLE);
+      tl.to(
+        proxy,
+        { phase: PHASES, duration: REELS_HOLD, onUpdate: apply },
+        SETTLE + PHASES,
+      );
     },
     { scope: sectionRef },
   );
@@ -115,10 +134,10 @@ export function Work() {
 
     if (!d.decided) {
       const travel = Math.abs(dx) + Math.abs(dy);
-      if (travel < 10) return;
+      if (travel < (isReelsPhase() ? 6 : 10)) return;
 
       d.decided = true;
-      d.rotating = Math.abs(dx) > Math.abs(dy) * 1.15;
+      d.rotating = horizontalIntent(dx, dy);
 
       if (d.rotating) {
         sceneState.dragging = true;
@@ -133,7 +152,8 @@ export function Work() {
 
     const stepX = e.clientX - d.lastX;
     d.lastX = e.clientX;
-    sceneState.orbitDragVelocity = stepX * 0.0022;
+    sceneState.orbitDrag += stepX * 0.0045;
+    sceneState.orbitDragVelocity = stepX * 0.0028;
   };
 
   const endDrag = (e: React.PointerEvent) => {
@@ -158,7 +178,8 @@ export function Work() {
 
     e.preventDefault();
     const delta = lateral ? e.deltaX : e.deltaY;
-    sceneState.orbitDragVelocity += delta * 0.00035;
+    sceneState.orbitDrag += delta * 0.0012;
+    sceneState.orbitDragVelocity += delta * 0.00045;
   };
 
   return (

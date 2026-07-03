@@ -112,9 +112,11 @@ export function Contact() {
               — Commission a study / 05
             </span>
 
-            <h2 className="text-display max-w-[12ch] text-[clamp(2.4rem,7.5vw,7rem)] leading-[0.92] text-bone">
-              Have a brief <span className="italic">worth carving?</span>
-            </h2>
+            <div className="-mx-1 rounded-sm bg-marble/92 px-4 py-5 md:-mx-2 md:px-6 md:py-7">
+              <h2 className="text-display max-w-[12ch] text-[clamp(2.4rem,7.5vw,7rem)] leading-[0.92] text-marine">
+                Have a brief <span className="italic">worth carving?</span>
+              </h2>
+            </div>
 
             <p className="mt-6 max-w-[34ch] text-sm leading-relaxed text-bone/45 md:mt-8 md:text-[0.95rem]">
               We take a limited number of mandates each year. Introductions are welcome; cold briefs

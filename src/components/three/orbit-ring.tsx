@@ -312,7 +312,7 @@ export function OrbitRing() {
     const phase = Math.min(2, Math.max(0, sceneState.orbitPhase));
     stack.position.y = RING_Y + phase * RING_GAP;
 
-    const newActive = Math.min(2, Math.max(0, Math.round(phase)));
+    const newActive = Math.min(2, Math.max(0, Math.floor(sceneState.orbitPhase + 0.25)));
     if (newActive !== activeRingIndex) setActiveRingIndex(newActive);
 
     ringRefs.current.forEach((ring, i) => {
