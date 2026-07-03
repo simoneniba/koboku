@@ -7,12 +7,13 @@ import { sceneState } from "@/lib/scene-state";
 
 /**
  * Selected Work — three orbit rings scrubbed by a short pin timeline.
- * Phase uses power2.out so Reels arrives early; pin ends soon after.
+ * Linear phase scrub: Reels completes exactly when the pin releases.
  */
 
-const SETTLE = 0.25;
-const PHASES = 2;
-const PIN_SCROLL = "+=115%";
+const SETTLE = 0.2;
+const PHASE_SCRUB = 1.0;
+const PHASE_TARGET = 2;
+const PIN_SCROLL = "+=72%";
 
 const DRAG_GAIN = 0.006;
 const DRAG_VEL = 0.0035;
@@ -90,14 +91,14 @@ export function Work() {
 
       const proxy = { phase: 0 };
       const apply = () => {
-        sceneState.orbitPhase = proxy.phase;
+        sceneState.orbitPhase =
+          proxy.phase >= 1.95 ? PHASE_TARGET : proxy.phase;
       };
 
       tl.to(proxy, { phase: 0, duration: SETTLE, onUpdate: apply }, 0);
-      // power2.out — Reels reached around 65% of the phase scroll, not at the very end.
       tl.to(
         proxy,
-        { phase: PHASES, ease: "power2.out", duration: PHASES, onUpdate: apply },
+        { phase: PHASE_TARGET, ease: "none", duration: PHASE_SCRUB, onUpdate: apply },
         SETTLE,
       );
     },
