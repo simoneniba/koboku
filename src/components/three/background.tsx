@@ -6,43 +6,36 @@ import { scrollStore } from "@/lib/scroll-store";
 
 /**
  * Fixed full-viewport water video background.
- * Parallax pauses while the Process white sheet fully covers the viewport.
+ * - Autoplay + muted + playsInline for mobile compatibility.
+ * - Loops indefinitely.
+ * - Falls back to /images/water.jpg as poster (and as static fallback if autoplay is blocked).
+ * - Translates vertically with scroll for parallax depth.
+ * - Pointer events disabled — sits behind all content and the 3D canvas.
  */
 export function Background() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
-  const coveringRef = useRef(false);
 
+  // One less decoder when the tab is hidden — the water video pauses
+  // in the background and resumes on return.
   useEffect(() => {
     const onVisibility = () => {
       const v = videoRef.current;
       if (!v) return;
       if (document.visibilityState === "hidden") v.pause();
-      else if (!scrollStore.whiteSheetCovering) v.play().catch(() => {});
+      else v.play().catch(() => {});
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
+  // Parallax driven imperatively from the scroll store — no re-renders.
   useEffect(() => {
     let last = -1;
     const sync = () => {
-      const covering = scrollStore.whiteSheetCovering;
-      const v = videoRef.current;
-
-      if (covering !== coveringRef.current) {
-        coveringRef.current = covering;
-        if (v) {
-          if (covering) v.pause();
-          else v.play().catch(() => {});
-        }
-      }
-
-      if (covering || !wrapperRef.current) return;
-
       const p = scrollStore.progress;
-      if (p === last) return;
+      if (p === last || !wrapperRef.current) return;
       last = p;
       wrapperRef.current.style.transform = `translate3d(0, ${-p * 80}px, 0)`;
     };
@@ -57,7 +50,9 @@ export function Background() {
     const handleError = () => setVideoFailed(true);
     video.addEventListener("error", handleError);
 
+    // Attempt explicit play in case autoplay attribute alone is blocked.
     video.play().catch(() => {
+      // Autoplay blocked — fall back to poster image.
       setVideoFailed(true);
     });
 
@@ -92,6 +87,7 @@ export function Background() {
           />
         )}
       </div>
+      {/* Subtle vignette to lift the title corners */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{

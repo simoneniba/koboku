@@ -1,6 +1,5 @@
 import { Nav } from "@/components/layout/nav";
 import { SceneDirector } from "@/components/providers/scene-director";
-import { ScrollRefresh } from "@/components/providers/scroll-refresh";
 import { Contact } from "@/components/sections/contact";
 import { Hero } from "@/components/sections/hero";
 import { Process } from "@/components/sections/process";
@@ -33,7 +32,6 @@ export default function HomePage() {
       {/* Section tracking for the camera/scene modes — after main so all
           section ids exist when triggers are created */}
       <SceneDirector />
-      <ScrollRefresh />
     </>
   );
 }
