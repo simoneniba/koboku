@@ -1,7 +1,7 @@
 "use client";
 
 import { Billboard, useTexture } from "@react-three/drei";
-import { type ThreeEvent, useFrame } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   type Group,
@@ -9,6 +9,7 @@ import {
   type Mesh,
   type MeshBasicMaterial,
   SRGBColorSpace,
+  Vector2,
   VideoTexture,
 } from "three";
 import { type OrbitItem, orbitFilm, orbitReels, orbitSites } from "@/data/portfolio";
@@ -44,6 +45,7 @@ const FACING_THRESHOLD = 0.55; // cos(worldAngle) — ~±56° window front-centr
 // Shared frame budget: reset by OrbitRing's useFrame (parent mounts first,
 // so its frame callback runs before the planes'), spent by LazyVideoPlane.
 const frameBudget = { remaining: 0 };
+const pointerVec = new Vector2();
 
 const LANDSCAPE: [number, number] = [1.7, 0.956];
 const PORTRAIT: [number, number] = [0.72, 1.28];
@@ -52,64 +54,41 @@ function planeSize(item: OrbitItem): [number, number] {
   return item.ratio === "9:16" ? PORTRAIT : LANDSCAPE;
 }
 
-function useOpenHref(item: OrbitItem) {
-  return (e: ThreeEvent<MouseEvent>) => {
-    if (!item.href || e.delta > 6) return;
-    e.stopPropagation();
-    window.open(item.href, "_blank", "noopener,noreferrer");
-  };
-}
-
-function hoverCursor(on: boolean) {
-  document.body.style.cursor = on ? "pointer" : "";
-}
-
-/** Smooth premium hover: lerps the plane group toward HOVER_SCALE while
- *  the pointer is over it, back to 1 when it leaves. */
+/** Smooth premium hover — driven by MANUAL raycasting in OrbitRing (the
+ *  pointer comes from the Work section's DOM overlay via sceneState), so
+ *  it works without any canvas pointer events. Each plane registers its
+ *  mesh; the ray marks the hit, the group lerps toward the target. */
 const HOVER_SCALE = 1.09;
 const HOVER_LERP = 0.12;
 
 function useHoverScale() {
   const groupRef = useRef<Group>(null);
-  const hovered = useRef(false);
   useFrame(() => {
     const g = groupRef.current;
     if (!g) return;
-    const target = hovered.current ? HOVER_SCALE : 1;
+    const target = g.userData.hoverTarget === HOVER_SCALE ? HOVER_SCALE : 1;
     const s = g.scale.x + (target - g.scale.x) * HOVER_LERP;
     g.scale.setScalar(s);
   });
-  return {
-    groupRef,
-    onPointerOver: () => {
-      hovered.current = true;
-    },
-    onPointerOut: () => {
-      hovered.current = false;
-    },
-  };
+  return groupRef;
+}
+
+/** Tag a mesh as hoverable and link it back to its scale group. */
+function linkHover(mesh: Mesh | null, group: Group | null) {
+  if (mesh && group) {
+    mesh.userData.orbitPlane = true;
+    mesh.userData.scaleGroup = group;
+  }
 }
 
 // ─── Static planes ───────────────────────────────────────────────────
 
 function ImagePlane({ item, src }: { item: OrbitItem; src: string }) {
   const texture = useTexture(src);
-  const onClick = useOpenHref(item);
-  const hover = useHoverScale();
+  const groupRef = useHoverScale();
   return (
-    <group ref={hover.groupRef}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: R3F mesh */}
-      <mesh
-        onClick={onClick}
-        onPointerOver={() => {
-          hover.onPointerOver();
-          if (item.href) hoverCursor(true);
-        }}
-        onPointerOut={() => {
-          hover.onPointerOut();
-          if (item.href) hoverCursor(false);
-        }}
-      >
+    <group ref={groupRef}>
+      <mesh ref={(m) => linkHover(m, groupRef.current)}>
         <planeGeometry args={planeSize(item)} />
         <meshBasicMaterial map={texture} toneMapped={false} transparent />
       </mesh>
@@ -231,22 +210,14 @@ function LazyVideoPlane({
     }
   });
 
-  const onClick = useOpenHref(item);
-  const hover = useHoverScale();
+  const groupRef = useHoverScale();
 
   return (
-    <group ref={hover.groupRef}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: R3F mesh */}
+    <group ref={groupRef}>
       <mesh
-        ref={meshRef}
-        onClick={onClick}
-        onPointerOver={() => {
-          hover.onPointerOver();
-          if (item.href) hoverCursor(true);
-        }}
-        onPointerOut={() => {
-          hover.onPointerOut();
-          if (item.href) hoverCursor(false);
+        ref={(m) => {
+          meshRef.current = m;
+          linkHover(m, groupRef.current);
         }}
       >
         <planeGeometry args={planeSize(item)} />
@@ -314,7 +285,7 @@ export function OrbitRing() {
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
-  useFrame((_state, delta) => {
+  useFrame((state, delta) => {
     // Reset the shared decode budget FIRST (parent frame runs before
     // children in mount order).
     frameBudget.remaining = VIDEO_BUDGET;
@@ -363,6 +334,30 @@ export function OrbitRing() {
     });
 
     stack.scale.setScalar(0.85 + 0.15 * vis);
+
+    // ── Manual raycast hover (pointer comes from the Work DOM overlay) ──
+    // Reset all targets, then mark the nearest hit plane on the ACTIVE
+    // ring only. Works with zero canvas pointer events.
+    const activeRing = ringRefs.current[activeRingIndex];
+    stack.traverse((obj) => {
+      const mesh = obj as Mesh;
+      if (mesh.userData?.orbitPlane) {
+        const g = mesh.userData.scaleGroup as Group | undefined;
+        if (g) g.userData.hoverTarget = 1;
+      }
+    });
+    if (sceneState.pointer.active && activeRing) {
+      state.raycaster.setFromCamera(
+        pointerVec.set(sceneState.pointer.x, sceneState.pointer.y),
+        state.camera,
+      );
+      const hits = state.raycaster.intersectObjects(activeRing.children, true);
+      const hit = hits.find((h) => (h.object as Mesh).userData?.orbitPlane);
+      if (hit) {
+        const g = (hit.object as Mesh).userData.scaleGroup as Group | undefined;
+        if (g) g.userData.hoverTarget = HOVER_SCALE;
+      }
+    }
   });
 
   return (

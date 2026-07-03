@@ -22,8 +22,7 @@ type Keyframe = {
   statueRotationY: number;
 };
 
-// Index-aligned with SECTION_IDS: hero, thesis, verticals, process, work,
-// stance, contact.
+// Index-aligned with SECTION_IDS: hero, thesis, verticals, process, work, contact.
 const KEYFRAMES: Keyframe[] = [
   // hero — wide, full statue
   { position: [0, 0.2, 4.2], lookAt: [0, 0, 0], statueRotationY: 0 },
@@ -35,13 +34,11 @@ const KEYFRAMES: Keyframe[] = [
   { position: [0, 0.45, 13], lookAt: [0, 0.45, 0], statueRotationY: 0 },
   // work — the orbit constellation: wide enough to see the full ring
   { position: [0, 0.6, 7.2], lookAt: [0, 0.35, 0], statueRotationY: 0 },
-  // stance — slight retreat, keeps the face readable behind the tenets
-  { position: [0.4, 0.6, 3.0], lookAt: [0, 0.4, 0], statueRotationY: -Math.PI * 0.2 },
-  // contact — zoom out, statue returns toward base rotation
+  // contact — gentle retreat after work, statue readable behind the CTA
   { position: [0.1, 0.8, 7.0], lookAt: [0, 0, 0], statueRotationY: 0 },
 ];
 
-const TRANSITION_RATIO = 0.35;
+const TRANSITION_RATIO = 0.25;
 
 function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);

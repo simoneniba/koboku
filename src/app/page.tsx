@@ -3,7 +3,6 @@ import { SceneDirector } from "@/components/providers/scene-director";
 import { Contact } from "@/components/sections/contact";
 import { Hero } from "@/components/sections/hero";
 import { Process } from "@/components/sections/process";
-import { Stance } from "@/components/sections/stance";
 import { Thesis } from "@/components/sections/thesis";
 import { Verticals } from "@/components/sections/verticals";
 import { Work } from "@/components/sections/work";
@@ -27,7 +26,6 @@ export default function HomePage() {
         <Verticals />
         <Process />
         <Work />
-        <Stance />
         <Contact />
       </main>
 

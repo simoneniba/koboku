@@ -16,7 +16,6 @@ export const SECTION_IDS = [
   "verticals",
   "process",
   "work",
-  "stance",
   "contact",
 ] as const;
 
@@ -49,6 +48,10 @@ export const sceneState = {
 
   /** True while the user is actively dragging on the canvas. */
   dragging: false,
+
+  /** Pointer in NDC (-1..1), written by the Work overlay, read by
+   *  OrbitRing for manual raycast hover — no canvas events needed. */
+  pointer: { x: 0, y: 0, active: false },
 };
 
 export function modeForSection(index: number): SceneMode {

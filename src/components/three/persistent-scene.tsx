@@ -64,8 +64,6 @@ export function PersistentScene() {
     drag.current.lastX = e.clientX;
     if (sceneState.mode === "pedestal") {
       sceneState.spinVelocity = dx * 0.0035;
-    } else if (sceneState.mode === "orbit") {
-      sceneState.orbitDragVelocity = dx * 0.0022;
     }
   };
 
