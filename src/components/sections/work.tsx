@@ -15,6 +15,7 @@ const DRAG_GAIN = 0.006;
 const DRAG_VEL = 0.0035;
 const GESTURE_MIN = 8;
 const GESTURE_RATIO = 0.85;
+const TAP_MAX = 12;
 
 type DragState = {
   active: boolean;
@@ -48,13 +49,7 @@ function resetWorkInteraction() {
   sceneState.dragging = false;
   sceneState.pointer.active = false;
   sceneState.orbitDragVelocity = 0;
-  sceneState.orbitReelsEngaged = false;
-}
-
-function engageReelsVideos() {
-  if (sceneState.orbitPhase >= 1.35) {
-    sceneState.orbitReelsEngaged = true;
-  }
+  sceneState.orbitHitHref = null;
 }
 
 export function Work() {
@@ -63,6 +58,7 @@ export function Work() {
   const labelRef = useRef<HTMLSpanElement>(null);
   const drag = useRef<DragState>({ ...DRAG_IDLE });
   const isCoarse = useRef(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     isCoarse.current = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
@@ -112,6 +108,18 @@ export function Work() {
     sceneState.pointer.active = true;
   };
 
+  const syncOverlayCursor = () => {
+    const el = overlayRef.current;
+    if (!el) return;
+    if (sceneState.orbitHitHref) {
+      el.style.cursor = "pointer";
+    } else if (drag.current.rotating) {
+      el.style.cursor = "grabbing";
+    } else {
+      el.style.cursor = "grab";
+    }
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
     drag.current = {
       active: true,
@@ -128,6 +136,7 @@ export function Work() {
 
   const onPointerMove = (e: React.PointerEvent) => {
     setPointer(e);
+    syncOverlayCursor();
     const d = drag.current;
     if (!d.active) return;
 
@@ -142,7 +151,6 @@ export function Work() {
 
       if (d.rotating) {
         sceneState.dragging = true;
-        engageReelsVideos();
         d.target?.setPointerCapture(e.pointerId);
       } else {
         d.active = false;
@@ -156,6 +164,16 @@ export function Work() {
     d.lastX = e.clientX;
     sceneState.orbitDrag += stepX * DRAG_GAIN;
     sceneState.orbitDragVelocity = stepX * DRAG_VEL;
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    const d = drag.current;
+    const travel =
+      Math.abs(e.clientX - d.startX) + Math.abs(e.clientY - d.startY);
+    if (!d.rotating && travel < TAP_MAX && sceneState.orbitHitHref) {
+      window.open(sceneState.orbitHitHref, "_blank", "noopener,noreferrer");
+    }
+    endDrag(e);
   };
 
   const endDrag = (e: React.PointerEvent) => {
@@ -179,7 +197,6 @@ export function Work() {
     if (!lateral && !e.shiftKey) return;
 
     e.preventDefault();
-    engageReelsVideos();
     const delta = lateral ? e.deltaX : e.deltaY;
     sceneState.orbitDrag += delta * 0.0016;
     sceneState.orbitDragVelocity += delta * 0.00055;
@@ -196,12 +213,13 @@ export function Work() {
         </span>
 
         <div
+          ref={overlayRef}
           className="absolute inset-0 cursor-grab active:cursor-grabbing"
           style={{ touchAction: "pan-y" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
           onPointerLeave={onPointerLeave}
           onWheel={onWheel}
         />

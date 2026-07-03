@@ -233,8 +233,11 @@ export const orbitFilm: OrbitItem[] = [
 const CASA_PASSERINI_URL = "https://casa-passerini-site.vercel.app/it/";
 
 export const orbitSites: OrbitItem[] = [
-  { type: "image", src: "/images/sites/casa-passerini-1.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
-  { type: "image", src: "/images/sites/casa-passerini-2.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
-  { type: "image", src: "/images/sites/casa-passerini-3.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
-  { type: "image", src: "/images/sites/casa-passerini-4.jpg", ratio: "16:9", title: "Casa Passerini", href: "https://casa-passerini-site.vercel.app/it/" },
+  {
+    type: "image",
+    src: "/images/sites/casa-passerini-1.jpg",
+    ratio: "16:9",
+    title: "Casa Passerini",
+    href: "https://casa-passerini-site.vercel.app/it",
+  },
 ];

@@ -74,10 +74,11 @@ function useHoverScale() {
 }
 
 /** Tag a mesh as hoverable and link it back to its scale group. */
-function linkHover(mesh: Mesh | null, group: Group | null) {
+function linkHover(mesh: Mesh | null, group: Group | null, href?: string) {
   if (mesh && group) {
     mesh.userData.orbitPlane = true;
     mesh.userData.scaleGroup = group;
+    mesh.userData.orbitHref = href ?? null;
   }
 }
 
@@ -88,7 +89,7 @@ function ImagePlane({ item, src }: { item: OrbitItem; src: string }) {
   const groupRef = useHoverScale();
   return (
     <group ref={groupRef}>
-      <mesh ref={(m) => linkHover(m, groupRef.current)}>
+      <mesh ref={(m) => linkHover(m, groupRef.current, item.href)}>
         <planeGeometry args={planeSize(item)} />
         <meshBasicMaterial map={texture} toneMapped={false} transparent />
       </mesh>
@@ -217,7 +218,7 @@ function LazyVideoPlane({
       <mesh
         ref={(m) => {
           meshRef.current = m;
-          linkHover(m, groupRef.current);
+          linkHover(m, groupRef.current, item.href);
         }}
       >
         <planeGeometry args={planeSize(item)} />
@@ -233,13 +234,11 @@ function Ring({
   items,
   baseOffset,
   active,
-  videosEnabled,
   ringRotationRef,
 }: {
   items: OrbitItem[];
   baseOffset: number;
   active: boolean;
-  videosEnabled: boolean;
   ringRotationRef: React.RefObject<number>;
 }) {
   const count = items.length;
@@ -249,9 +248,7 @@ function Ring({
         const angle = baseOffset + (i / count) * Math.PI * 2;
         const x = Math.sin(angle) * RADIUS;
         const z = Math.cos(angle) * RADIUS;
-        // Videos only mount when the ring is active, has a poster, and
-        // (for Reels) the user has engaged via horizontal drag.
-        const lazy = item.type === "video" && active && item.poster && videosEnabled;
+        const lazy = item.type === "video" && active && item.poster;
         return (
           <Billboard key={`${item.title}-${angle.toFixed(3)}`} position={[x, 0, z]}>
             <Suspense fallback={null}>
@@ -282,7 +279,6 @@ export function OrbitRing() {
   const ringRotationRefs = useRef<React.RefObject<number>[]>(RING_DEFS.map(() => ({ current: 0 })));
   const reducedMotion = useRef(false);
   const [activeRingIndex, setActiveRingIndex] = useState(-1); // -1: none until Work
-  const [reelsVideosEnabled, setReelsVideosEnabled] = useState(false);
 
   useLayoutEffect(() => {
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -303,12 +299,8 @@ export function OrbitRing() {
     // section is actually reached.
     if (vis < 0.05) {
       if (activeRingIndex !== -1) setActiveRingIndex(-1);
-      if (reelsVideosEnabled) setReelsVideosEnabled(false);
+      sceneState.orbitHitHref = null;
       return;
-    }
-
-    if (sceneState.orbitReelsEngaged && !reelsVideosEnabled) {
-      setReelsVideosEnabled(true);
     }
 
     if (!reducedMotion.current && !sceneState.dragging) {
@@ -344,8 +336,7 @@ export function OrbitRing() {
     stack.scale.setScalar(0.85 + 0.15 * vis);
 
     // ── Manual raycast hover (pointer comes from the Work DOM overlay) ──
-    // Reset all targets, then mark the nearest hit plane on the ACTIVE
-    // ring only. Works with zero canvas pointer events.
+    sceneState.orbitHitHref = null;
     const activeRing = ringRefs.current[activeRingIndex];
     stack.traverse((obj) => {
       const mesh = obj as Mesh;
@@ -362,8 +353,11 @@ export function OrbitRing() {
       const hits = state.raycaster.intersectObjects(activeRing.children, true);
       const hit = hits.find((h) => (h.object as Mesh).userData?.orbitPlane);
       if (hit) {
-        const g = (hit.object as Mesh).userData.scaleGroup as Group | undefined;
+        const mesh = hit.object as Mesh;
+        const g = mesh.userData.scaleGroup as Group | undefined;
         if (g) g.userData.hoverTarget = HOVER_SCALE;
+        const href = mesh.userData.orbitHref as string | null | undefined;
+        if (href) sceneState.orbitHitHref = href;
       }
     }
   });
@@ -382,7 +376,6 @@ export function OrbitRing() {
             items={ring.items}
             baseOffset={ring.baseOffset}
             active={i === activeRingIndex}
-            videosEnabled={i !== 2 || reelsVideosEnabled}
             ringRotationRef={ringRotationRefs.current[i]}
           />
         </group>
