@@ -28,14 +28,20 @@ export async function POST(req: Request) {
   // Temporary — remove after first successful Gumroad connection
   console.log("gumroad ping:", JSON.stringify(p));
 
-  const sellerOk = Boolean(GUMROAD_SELLER_ID) && p.seller_id === GUMROAD_SELLER_ID;
+  // During first connect, GUMROAD_SELLER_ID may be empty — accept and log seller_id so we can save it.
+  if (!GUMROAD_SELLER_ID && p.seller_id) {
+    console.warn("GUMROAD_SELLER_ID missing — ping seller_id=", p.seller_id);
+  }
+  const sellerOk = !GUMROAD_SELLER_ID || p.seller_id === GUMROAD_SELLER_ID;
   const productOk =
     ALLOWED_PRODUCTS.length === 0 ||
     ALLOWED_PRODUCTS.includes(p.product_id) ||
     ALLOWED_PRODUCTS.includes(p.product_permalink);
   if (!sellerOk || !productOk) return new Response("ignored", { status: 200 });
 
-  if (p.test === "true") return new Response("test ok", { status: 200 });
+  // Buying your own product sets test=true. Allow only when explicitly enabled (setup/testing).
+  const allowTest = process.env.GUMROAD_ALLOW_TEST_PURCHASES === "true";
+  if (p.test === "true" && !allowTest) return new Response("test ok", { status: 200 });
   if (p.resource_name === "refund" || p.refunded === "true" || p.disputed === "true") {
     return new Response("not a completed sale", { status: 200 });
   }
