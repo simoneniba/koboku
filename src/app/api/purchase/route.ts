@@ -33,10 +33,26 @@ export async function POST(req: Request) {
     console.warn("GUMROAD_SELLER_ID missing — ping seller_id=", p.seller_id);
   }
   const sellerOk = !GUMROAD_SELLER_ID || p.seller_id === GUMROAD_SELLER_ID;
+  // Gumroad may send permalink as short id ("omgiye") OR full URL (.../l/omgiye).
+  const productCandidates = [
+    p.product_id,
+    p.product_permalink,
+    p.permalink,
+    p.short_product_id,
+  ].filter(Boolean);
   const productOk =
     ALLOWED_PRODUCTS.length === 0 ||
-    ALLOWED_PRODUCTS.includes(p.product_id) ||
-    ALLOWED_PRODUCTS.includes(p.product_permalink);
+    productCandidates.some(
+      (value) =>
+        ALLOWED_PRODUCTS.includes(value) ||
+        ALLOWED_PRODUCTS.some(
+          (allowed) =>
+            value === allowed ||
+            value.endsWith(`/l/${allowed}`) ||
+            value.includes(`/l/${allowed}?`) ||
+            value.includes(`/l/${allowed}/`),
+        ),
+    );
   if (!sellerOk || !productOk) return new Response("ignored", { status: 200 });
 
   // Buying your own product sets test=true. Allow only when explicitly enabled (setup/testing).
