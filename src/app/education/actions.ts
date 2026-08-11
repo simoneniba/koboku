@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { sendAccessEmail } from "@/lib/access-email";
+import { MEMBERS_TABLE } from "@/lib/members";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -31,7 +32,7 @@ export async function requestEducationMagicLink(
   try {
     const admin = createAdminClient();
     const { data: member } = await admin
-      .from("members")
+      .from(MEMBERS_TABLE)
       .select("email")
       .eq("email", email)
       .eq("status", "active")

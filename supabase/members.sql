@@ -1,62 +1,44 @@
 -- Run in Supabase → SQL → New query → Run
--- Creates public.members + RLS if missing (safe to re-run).
+-- Upgrades public."NEW AI MAFIA MEMBERS" for Education access (does NOT rename the table).
+-- Safe to re-run. If the table already has rows, email is added nullable first, then uniqued.
 
-DO $$
-BEGIN
-  IF to_regclass('public.members') IS NULL THEN
-    CREATE TABLE public.members (
-      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      email text UNIQUE NOT NULL,
-      product text,
-      status text DEFAULT 'active',
-      source text,
-      order_id text,
-      created_at timestamptz DEFAULT now()
-    );
-  END IF;
-END $$;
-
-ALTER TABLE public.members
-  ADD COLUMN IF NOT EXISTS id uuid DEFAULT gen_random_uuid(),
+ALTER TABLE public."NEW AI MAFIA MEMBERS"
   ADD COLUMN IF NOT EXISTS email text,
   ADD COLUMN IF NOT EXISTS product text,
   ADD COLUMN IF NOT EXISTS status text DEFAULT 'active',
   ADD COLUMN IF NOT EXISTS source text,
-  ADD COLUMN IF NOT EXISTS order_id text,
-  ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+  ADD COLUMN IF NOT EXISTS order_id text;
 
-ALTER TABLE public.members
-  ALTER COLUMN id SET DEFAULT gen_random_uuid(),
-  ALTER COLUMN status SET DEFAULT 'active',
+ALTER TABLE public."NEW AI MAFIA MEMBERS"
   ALTER COLUMN created_at SET DEFAULT now(),
+  ALTER COLUMN status SET DEFAULT 'active';
+
+-- Empty rows with null email cannot stay if we enforce NOT NULL.
+-- If this fails because old blank rows exist, delete/fix those rows then re-run.
+UPDATE public."NEW AI MAFIA MEMBERS"
+SET email = 'unknown+' || id::text || '@invalid.local'
+WHERE email IS NULL;
+
+ALTER TABLE public."NEW AI MAFIA MEMBERS"
   ALTER COLUMN email SET NOT NULL;
 
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'members_email_key'
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'NEW_AI_MAFIA_MEMBERS_email_key'
   ) THEN
-    ALTER TABLE public.members
-      ADD CONSTRAINT members_email_key UNIQUE (email);
+    ALTER TABLE public."NEW AI MAFIA MEMBERS"
+      ADD CONSTRAINT NEW_AI_MAFIA_MEMBERS_email_key UNIQUE (email);
   END IF;
 END $$;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'members_pkey'
-  ) THEN
-    ALTER TABLE public.members
-      ADD CONSTRAINT members_pkey PRIMARY KEY (id);
-  END IF;
-END $$;
+ALTER TABLE public."NEW AI MAFIA MEMBERS" ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.members FORCE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "read own membership" ON public.members;
+DROP POLICY IF EXISTS "read own membership" ON public."NEW AI MAFIA MEMBERS";
 
 CREATE POLICY "read own membership"
-  ON public.members
+  ON public."NEW AI MAFIA MEMBERS"
   FOR SELECT
   USING (auth.jwt() ->> 'email' = email);

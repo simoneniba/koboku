@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EducationLoginForm } from "@/components/education/login-form";
 import { EducationVault } from "@/components/education/vault";
 import { signOutFromEducation } from "@/app/education/actions";
+import { MEMBERS_TABLE } from "@/lib/members";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -85,7 +86,7 @@ export default async function EducationPage({
   try {
     const admin = createAdminClient();
     const { data: member } = await admin
-      .from("members")
+      .from(MEMBERS_TABLE)
       .select("email")
       .eq("email", userEmail)
       .eq("status", "active")

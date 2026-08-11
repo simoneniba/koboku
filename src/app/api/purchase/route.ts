@@ -1,4 +1,5 @@
 import { sendAccessEmail } from "@/lib/access-email";
+import { MEMBERS_TABLE } from "@/lib/members";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /*
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
 
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("members").upsert(
+    const { error } = await supabase.from(MEMBERS_TABLE).upsert(
       {
         email,
         product: p.product_permalink ?? p.product_id ?? "unknown",
