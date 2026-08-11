@@ -25,8 +25,8 @@ export async function POST(req: Request) {
   }
 
   const p = Object.fromEntries((await req.formData()).entries()) as Record<string, string>;
-  // Enable once on first deploy to confirm Gumroad field names, then remove:
-  // console.log("gumroad ping:", JSON.stringify(p));
+  // Temporary — remove after first successful Gumroad connection
+  console.log("gumroad ping:", JSON.stringify(p));
 
   const sellerOk = Boolean(GUMROAD_SELLER_ID) && p.seller_id === GUMROAD_SELLER_ID;
   const productOk =
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   if (!sellerOk || !productOk) return new Response("ignored", { status: 200 });
 
   if (p.test === "true") return new Response("test ok", { status: 200 });
-  if (p.refunded === "true" || p.disputed === "true") {
+  if (p.resource_name === "refund" || p.refunded === "true" || p.disputed === "true") {
     return new Response("not a completed sale", { status: 200 });
   }
 
