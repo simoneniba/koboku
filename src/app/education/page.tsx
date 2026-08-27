@@ -47,6 +47,24 @@ export default function EducationPage() {
           </p>
         </section>
 
+        <section className="mt-20 md:mt-28 border-t border-bone/10 pt-16 md:pt-20">
+          <span className="text-eyebrow text-bone/40 block mb-8">— Tool</span>
+          <Link
+            href="/education/carousel"
+            className="group inline-flex flex-col gap-4 outline-none focus-visible:ring-1 focus-visible:ring-amber/40"
+          >
+            <h2 className="text-display text-[clamp(1.75rem,4vw,3rem)] text-bone leading-[0.95] transition-colors group-hover:text-amber">
+              Luxury Carousel Engine
+            </h2>
+            <p className="text-sm md:text-base text-bone/50 leading-relaxed max-w-[40ch]">
+              A fashion-journal prompt you copy once and paste into the AI you trust.
+            </p>
+            <span className="text-eyebrow text-bone/35 transition-transform group-hover:translate-x-1 group-hover:text-amber">
+              Open →
+            </span>
+          </Link>
+        </section>
+
         <div className="mt-24 pt-10 border-t border-bone/10 text-sm text-bone/40">
           <Link href="/" className="hover:text-bone transition-colors">
             ← Return to the studio

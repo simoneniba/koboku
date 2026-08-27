@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useSceneReady } from "@/lib/ready-state";
 
 const IMAGES = [
@@ -14,7 +15,21 @@ const IMAGES = [
 const MIN_DURATION_MS = 1800;
 const FADE_MS = 700;
 
+/** Routes without the 3D scene — skip the studio preloader entirely. */
+function isStandaloneRoute(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
+    pathname === "/education" ||
+    pathname.startsWith("/education/") ||
+    pathname === "/vault" ||
+    pathname.startsWith("/vault/")
+  );
+}
+
 export function LoadingScreen() {
+  const pathname = usePathname();
+  const standalone = isStandaloneRoute(pathname);
+
   // L'immagine viene scelta solo nel browser, dopo il mount — mai durante
   // il render server, così server e client coincidono (no hydration error).
   const [image, setImage] = useState<string | null>(null);
@@ -25,10 +40,12 @@ export function LoadingScreen() {
   const startRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (standalone) return;
     setImage(IMAGES[Math.floor(Math.random() * IMAGES.length)]);
-  }, []);
+  }, [standalone]);
 
   useEffect(() => {
+    if (standalone) return;
     if (startRef.current === null) startRef.current = performance.now();
     let raf = 0;
 
@@ -50,9 +67,9 @@ export function LoadingScreen() {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [sceneReady]);
+  }, [sceneReady, standalone]);
 
-  if (hidden) return null;
+  if (standalone || hidden) return null;
 
   return (
     <div
